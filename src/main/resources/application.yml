@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: password
+    url: jdbc:mysql://localhost:3306/kuikuioj
+  mail:
+    host: smtp.qq.com
+    protocol: smtp
+    username: 3076749522@qq.com
+    password: dlcavisozykodfjb
+    default-encoding: utf-8
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+  port: 8080
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete #
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+
+
