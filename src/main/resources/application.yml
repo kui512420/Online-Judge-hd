@@ -1,4 +1,7 @@
 spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
@@ -20,6 +23,7 @@ spring:
 server:
   port: 8080
 mybatis-plus:
+  mapper-locations: classpath:space/kuikui/oj/mapper/*.xml
   configuration:
     map-underscore-to-camel-case: false
   global-config:
@@ -27,6 +31,12 @@ mybatis-plus:
       logic-delete-field: isDelete #
       logic-delete-value: 1
       logic-not-delete-value: 0
+# 分页查询插件配置
+pagehelper:
+  helper-dialect: mysql
+  params: count=countSql
+  reasonable: true
+  support-methods-arguments: true
 
 
 

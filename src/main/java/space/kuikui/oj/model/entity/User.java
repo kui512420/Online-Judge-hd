@@ -2,6 +2,7 @@ package space.kuikui.oj.model.entity;
 
 import java.util.Date;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * 
@@ -9,6 +10,9 @@ import lombok.Data;
  */
 @Data
 public class User {
+    {
+        this.userRole = "user";
+    }
     /**
      * id
      */

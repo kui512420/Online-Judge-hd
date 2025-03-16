@@ -1,6 +1,7 @@
 package space.kuikui.oj.utils;
 
 import cn.hutool.core.util.RandomUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,14 @@ public class CaptchaEmailUtils {
     }
     public boolean cheak(String email, String cheakCode) {
         String code = (String) redisTemplate.opsForValue().get("email"+":"+email+":code");
-        return cheakCode==null?false:code.equals(cheakCode);
+        if(StringUtils.isAnyBlank(code)){
+            return false;
+        }
+        if(code.equals(cheakCode)) {
+            return true;
+        }else{
+            return false;
+        }
     }
 
 }

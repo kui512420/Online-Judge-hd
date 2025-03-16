@@ -1,14 +1,15 @@
-package space.kuikui.oj.model.entity;
+package generator.domain;
 
+import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
 
 /**
- * 帖子
- * @TableName post
+ * 题目
+ * @TableName question
  */
 @Data
-public class Post {
+public class Question implements Serializable {
     /**
      * id
      */
@@ -30,14 +31,29 @@ public class Post {
     private String tags;
 
     /**
-     * 点赞数
+     * 题目答案
      */
-    private Integer thumbNum;
+    private String answer;
 
     /**
-     * 收藏数
+     * 题目提交数
      */
-    private Integer favourNum;
+    private Integer submitNum;
+
+    /**
+     * 题目通过数
+     */
+    private Integer acceptedNum;
+
+    /**
+     * 判题用例（json 数组）
+     */
+    private String judgeCase;
+
+    /**
+     * 判题配置（json 对象）
+     */
+    private String judgeConfig;
 
     /**
      * 创建用户 id
@@ -59,6 +75,8 @@ public class Post {
      */
     private Integer isDelete;
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {
@@ -70,13 +88,16 @@ public class Post {
         if (getClass() != that.getClass()) {
             return false;
         }
-        Post other = (Post) that;
+        Question other = (Question) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getTitle() == null ? other.getTitle() == null : this.getTitle().equals(other.getTitle()))
             && (this.getContent() == null ? other.getContent() == null : this.getContent().equals(other.getContent()))
             && (this.getTags() == null ? other.getTags() == null : this.getTags().equals(other.getTags()))
-            && (this.getThumbNum() == null ? other.getThumbNum() == null : this.getThumbNum().equals(other.getThumbNum()))
-            && (this.getFavourNum() == null ? other.getFavourNum() == null : this.getFavourNum().equals(other.getFavourNum()))
+            && (this.getAnswer() == null ? other.getAnswer() == null : this.getAnswer().equals(other.getAnswer()))
+            && (this.getSubmitNum() == null ? other.getSubmitNum() == null : this.getSubmitNum().equals(other.getSubmitNum()))
+            && (this.getAcceptedNum() == null ? other.getAcceptedNum() == null : this.getAcceptedNum().equals(other.getAcceptedNum()))
+            && (this.getJudgeCase() == null ? other.getJudgeCase() == null : this.getJudgeCase().equals(other.getJudgeCase()))
+            && (this.getJudgeConfig() == null ? other.getJudgeConfig() == null : this.getJudgeConfig().equals(other.getJudgeConfig()))
             && (this.getUserId() == null ? other.getUserId() == null : this.getUserId().equals(other.getUserId()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
@@ -91,8 +112,11 @@ public class Post {
         result = prime * result + ((getTitle() == null) ? 0 : getTitle().hashCode());
         result = prime * result + ((getContent() == null) ? 0 : getContent().hashCode());
         result = prime * result + ((getTags() == null) ? 0 : getTags().hashCode());
-        result = prime * result + ((getThumbNum() == null) ? 0 : getThumbNum().hashCode());
-        result = prime * result + ((getFavourNum() == null) ? 0 : getFavourNum().hashCode());
+        result = prime * result + ((getAnswer() == null) ? 0 : getAnswer().hashCode());
+        result = prime * result + ((getSubmitNum() == null) ? 0 : getSubmitNum().hashCode());
+        result = prime * result + ((getAcceptedNum() == null) ? 0 : getAcceptedNum().hashCode());
+        result = prime * result + ((getJudgeCase() == null) ? 0 : getJudgeCase().hashCode());
+        result = prime * result + ((getJudgeConfig() == null) ? 0 : getJudgeConfig().hashCode());
         result = prime * result + ((getUserId() == null) ? 0 : getUserId().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
@@ -110,12 +134,16 @@ public class Post {
         sb.append(", title=").append(title);
         sb.append(", content=").append(content);
         sb.append(", tags=").append(tags);
-        sb.append(", thumbNum=").append(thumbNum);
-        sb.append(", favourNum=").append(favourNum);
+        sb.append(", answer=").append(answer);
+        sb.append(", submitNum=").append(submitNum);
+        sb.append(", acceptedNum=").append(acceptedNum);
+        sb.append(", judgeCase=").append(judgeCase);
+        sb.append(", judgeConfig=").append(judgeConfig);
         sb.append(", userId=").append(userId);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
         sb.append(", isDelete=").append(isDelete);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();
     }
