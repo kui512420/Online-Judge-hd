@@ -1,3 +1,6 @@
+server:
+  port: 8080
+# spring 配置
 spring:
   mvc:
     pathmatch:
@@ -20,8 +23,11 @@ spring:
           auth: true
           starttls:
             enable: true
-server:
-  port: 8080
+  redis:
+    port: 6379
+    host: localhost
+    database: 0
+# 持久层设置
 mybatis-plus:
   mapper-locations: classpath:space/kuikui/oj/mapper/*.xml
   configuration:

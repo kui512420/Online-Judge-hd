@@ -1,5 +1,6 @@
 package space.kuikui.oj.service;
 
+import com.github.pagehelper.PageInfo;
 import space.kuikui.oj.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -13,7 +14,15 @@ import java.util.Map;
 * @createDate 2025-03-15 16:11:44
 */
 public interface UserService extends IService<User> {
-    Map<String,String> userLogin(String user, String userPassword,String code, HttpServletRequest request);
+
+
+    PageInfo<User> userList(int page, int size, int type);
+    Map<String,String> userLogin(String user, String userPassword, String code, HttpServletRequest request);
     Map<String,String> userRegister(String userAccount, String userPassword, String userCheakPassword, String email, String emailCode, HttpServletRequest request);
     String sendEmail(String email);
+    User userInfo(long id);
+    int updateUserName(long id, String userName);
+    int updateUserProfile(long id, String userProfile);
+    int updateUserPassword(long id, String userPassword,String newUserPassword,String email,String code);
+    int updateUserAvatar(long id, String userAvatar);
 }

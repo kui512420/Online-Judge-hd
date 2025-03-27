@@ -10,9 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
  */
 @Data
 public class User {
-    {
-        this.userRole = "user";
-    }
+
     /**
      * id
      */

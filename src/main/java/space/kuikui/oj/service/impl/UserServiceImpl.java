@@ -2,6 +2,8 @@ package space.kuikui.oj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +25,8 @@ import org.springframework.util.DigestUtils;
 import space.kuikui.oj.utils.CaptchaEmailUtils;
 import space.kuikui.oj.utils.CaptchaUtil;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     private UserMapper userMapper;
     @Resource
     private JavaMailSender mailSender = new JavaMailSenderImpl();
-    @Resource
+    @Autowired
     private CaptchaEmailUtils captchaEmailUtils;
     @Resource
     private JwtLoginUtils jwtLoginUtils;
@@ -50,6 +52,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     @Value("${spring.mail.username}")
     private String from;
     private static String SALT = "KUIKUI";
+
+    @Override
+    public PageInfo<User> userList(int page, int size, int type) {
+        List<User> userList = null;
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        PageHelper.startPage(page,size);
+        //全查
+        if (type==0) {
+            queryWrapper.orderByDesc("createTime");
+            userList = userMapper.selectList(queryWrapper);
+        } else if (type==1) {
+            userList = userMapper.selectList(null);
+        } else if (type==2) {
+            userList = userMapper.selectList(null);
+        }else{
+            throw new BusinessException(ErrorCode.PARMS_ERROR,"type值错误");
+        }
+        PageInfo<User> pageInfo = new PageInfo<>(userList);
+        return pageInfo;
+    }
 
     /**
      *
@@ -84,9 +106,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
                 map.put("RefreshToken",RefreshToken);
             }else{
                 String accessToken = jwtLoginUtils.jwtBdAccess(user2);
-                String RefreshToken = jwtLoginUtils.jwtBdRefresh(user2.getId(),request);
-                map.put("accessToken",accessToken);
-                map.put("RefreshToken",RefreshToken);
+                String refreshToken = jwtLoginUtils.jwtBdRefresh(user2.getId(),request);
+                map.put("AccessToken",accessToken);
+                map.put("RefreshToken",refreshToken);
             }
         }
         return map;
@@ -104,18 +126,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
      * @throws BusinessException
      */
     @Override
-    public Map<String,String> userRegister(String userAccount, String userPassword, String userCheakPassword, String email, String emailCode, HttpServletRequest request) throws BusinessException {
-        if(StringUtils.isAnyBlank(userAccount,userPassword,userCheakPassword,email,emailCode)){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"参数不能为空");
-        }else if(!(userAccount.length()>=6 && userAccount.length()<=15)){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"用户名限制：6~15位");
-        }else if(!(userPassword.length()>=6 && userPassword.length()<=15)){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"密码限制：6~15位");
-        }else if(!userPassword.equals(userCheakPassword)){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"两次密码输入不同");
-        }else if(!captchaEmailUtils.cheak(email,emailCode)){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"验证码错误或失效");
-        }
+    public Map<String,String> userRegister(String userAccount, String userPassword, String userCheakPassword, String email, String emailCode, HttpServletRequest request){
+            if(StringUtils.isAnyBlank(userAccount,userPassword,userCheakPassword,email,emailCode)){
+                throw new BusinessException(ErrorCode.PARMS_ERROR,"参数不能为空");
+            }else if(!(userAccount.length()>=6 && userAccount.length()<=15)){
+                throw new BusinessException(ErrorCode.PARMS_ERROR,"用户名限制：6~15位");
+            }else if(!(userPassword.length()>=6 && userPassword.length()<=15)){
+                throw new BusinessException(ErrorCode.PARMS_ERROR,"密码限制：6~15位");
+            }else if(!userPassword.equals(userCheakPassword)){
+                throw new BusinessException(ErrorCode.PARMS_ERROR,"两次密码输入不同");
+            }else if(!captchaEmailUtils.check(email,emailCode)){
+                throw new BusinessException(ErrorCode.PARMS_ERROR,"验证码错误或失效");
+            }
+
+
         synchronized (userAccount.intern()) {
             // 账户不能重复
             QueryWrapper<User> queryWrapperUser = new QueryWrapper<>();
@@ -141,10 +165,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"注册失败，数据库错误");
             }else{
                 String accessToken = jwtLoginUtils.jwtBdAccess(user);
-                String RefreshToken = jwtLoginUtils.jwtBdRefresh(user.getId(),request);
+                String refreshToken = jwtLoginUtils.jwtBdRefresh(user.getId(),request);
                 Map<String,String> map = new HashMap<>();
-                map.put("accessToken",accessToken);
-                map.put("RefreshToken",RefreshToken);
+                map.put("AccessToken",accessToken);
+                map.put("RefreshToken",refreshToken);
                 return map;
             }
         }
@@ -170,6 +194,64 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
         }
         return null;
     }
+
+    @Override
+    public User userInfo(long id) {
+        return userMapper.findUserById(id);
+    }
+
+    @Override
+    public int updateUserName(long id, String userName) {
+        userName = userName.replace("\"","");
+        int count = 0;
+        try{
+            count = userMapper.updateUserName(id,userName);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"修改昵称失败");
+        }
+        return count;
+    }
+
+    @Override
+    public int updateUserProfile(long id, String userProfile) {
+        userProfile = userProfile.replace("\"","");
+        int count = 0;
+        try{
+            count = userMapper.updateUserProfile(id,userProfile);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"修改个人简介失败");
+        }
+        return count;
+    }
+
+    @Override
+    public int updateUserPassword(long id, String userPassword, String newUserPassword,String email,String code) {
+        String savePassword = userMapper.findUsePasswordById(id);
+        String inputPassword =  DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+        CaptchaEmailUtils captchaEmailUtils = new CaptchaEmailUtils();
+        boolean cheakCode = captchaEmailUtils.check(email,code);
+        if(!cheakCode){
+            throw new BusinessException(ErrorCode.PARMS_ERROR,"邮箱验证码错误");
+        }
+        int count = 0;
+        if(savePassword.equals(inputPassword)){
+            try{
+                String newPassword = DigestUtils.md5DigestAsHex((SALT + newUserPassword).getBytes());
+                count = userMapper.updateUserPassword(id,newPassword);
+            }catch (Exception e){
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR,"修改密码失败");
+            }
+        }else{
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"原密码错误");
+        }
+        return count;
+    }
+
+    @Override
+    public int updateUserAvatar(long id, String userAvatar) {
+        return userMapper.updateUserAvatar(id,userAvatar);
+    }
+
 }
 
 
