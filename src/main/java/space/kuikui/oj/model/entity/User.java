@@ -1,8 +1,9 @@
 package space.kuikui.oj.model.entity;
 
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * 
@@ -14,6 +15,8 @@ public class User {
     /**
      * id
      */
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
     /**

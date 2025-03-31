@@ -1,6 +1,6 @@
 package space.kuikui.oj.controller;
 
-import com.github.pagehelper.PageInfo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ErrorCode;
@@ -159,8 +159,8 @@ public class UserController {
         return ResultUtils.success("修改成功",count+"");
     }
     @GetMapping("/userList")
-    public BaseResponse<PageInfo<User>> getUserList(@ModelAttribute UserListRequest userListRequest) {
-        PageInfo<User> userList = userService.userList(userListRequest.getPage(),userListRequest.getSize(),userListRequest.getType());
+    public BaseResponse<Page<User>> getUserList(@ModelAttribute UserListRequest userListRequest) {
+        Page<User> userList = userService.userList(userListRequest);
         return ResultUtils.success("查询成功",userList);
     }
 }

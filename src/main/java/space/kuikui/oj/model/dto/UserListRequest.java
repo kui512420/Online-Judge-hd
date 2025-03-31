@@ -17,6 +17,8 @@ public class UserListRequest {
      * 2 通过账号查询
      * 3 通过邮箱查询
      */
-    private int type;
-
+    private Integer type;
+    private Long id;
+    private String userAccount;
+    private String email;
 }

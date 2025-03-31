@@ -1,6 +1,7 @@
 package space.kuikui.oj.service;
 
-import com.github.pagehelper.PageInfo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import space.kuikui.oj.model.dto.UserListRequest;
 import space.kuikui.oj.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -16,7 +17,7 @@ import java.util.Map;
 public interface UserService extends IService<User> {
 
 
-    PageInfo<User> userList(int page, int size, int type);
+    Page<User> userList(UserListRequest userListRequest);
     Map<String,String> userLogin(String user, String userPassword, String code, HttpServletRequest request);
     Map<String,String> userRegister(String userAccount, String userPassword, String userCheakPassword, String email, String emailCode, HttpServletRequest request);
     String sendEmail(String email);

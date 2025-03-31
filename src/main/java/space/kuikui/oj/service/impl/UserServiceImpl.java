@@ -1,9 +1,8 @@
 package space.kuikui.oj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +12,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import space.kuikui.oj.common.ErrorCode;
 import space.kuikui.oj.common.JwtLoginUtils;
 import space.kuikui.oj.exception.BusinessException;
+import space.kuikui.oj.model.dto.UserListRequest;
 import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.mapper.UserMapper;
@@ -26,7 +26,6 @@ import space.kuikui.oj.utils.CaptchaEmailUtils;
 import space.kuikui.oj.utils.CaptchaUtil;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,25 +51,44 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     @Value("${spring.mail.username}")
     private String from;
     private static String SALT = "KUIKUI";
-
+    /**
+     *
+     * type:
+     * 0 全部查询
+     * 1 通过id查询
+     * 2 通过账号查询
+     * 3 通过邮箱查询
+     */
     @Override
-    public PageInfo<User> userList(int page, int size, int type) {
-        List<User> userList = null;
+    public Page<User> userList(UserListRequest userListRequest) {
+        // 1. 创建 MyBatis-Plus 分页对象
+        Page<User> page = new Page<>(userListRequest.getPage(), userListRequest.getSize());
+
+        // 2. 构建查询条件
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        PageHelper.startPage(page,size);
-        //全查
-        if (type==0) {
-            queryWrapper.orderByDesc("createTime");
-            userList = userMapper.selectList(queryWrapper);
-        } else if (type==1) {
-            userList = userMapper.selectList(null);
-        } else if (type==2) {
-            userList = userMapper.selectList(null);
-        }else{
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"type值错误");
+        int type = userListRequest.getType();
+
+        // 3. 根据 type 设置不同的查询条件
+        switch (type) {
+            case 0: // 全查
+                queryWrapper.orderByDesc("createTime");
+                break;
+            case 1: // 按 ID 查询
+                queryWrapper.eq("id", userListRequest.getId());
+                break;
+            case 2: // 按账号查询
+                queryWrapper.eq("userAccount", userListRequest.getUserAccount());
+                break;
+            case 3: // 按邮箱查询
+                queryWrapper.eq("email", userListRequest.getEmail());
+                break;
+            default:
+                throw new BusinessException(ErrorCode.PARMS_ERROR, "type值错误");
         }
-        PageInfo<User> pageInfo = new PageInfo<>(userList);
-        return pageInfo;
+        // 4. 执行分页查询（MyBatis-Plus 的 selectPage）
+        Page<User> resultPage = userMapper.selectPage(page, queryWrapper);
+
+        return resultPage;
     }
 
     /**
