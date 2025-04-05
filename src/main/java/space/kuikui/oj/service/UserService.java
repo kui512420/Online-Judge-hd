@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,4 +27,8 @@ public interface UserService extends IService<User> {
     int updateUserProfile(long id, String userProfile);
     int updateUserPassword(long id, String userPassword,String newUserPassword,String email,String code);
     int updateUserAvatar(long id, String userAvatar);
+    int logicalDelete(long id);
+    Integer putUserRole(Long id, String userRole);
+
+    List<User> queryUsers();
 }

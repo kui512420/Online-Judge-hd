@@ -33,6 +33,10 @@ public interface UserMapper extends BaseMapper<User> {
     int updateUserPassword(@Param("id")  long id,@Param("userPassword")  String userPassword);
     @Update("update user set userAvatar=#{userAvatar} where id=#{id}")
     int updateUserAvatar(@Param("id")  long id,@Param("userAvatar")  String userAvatar);
+    @Update("update user set isDelete=1 where id=#{id}")
+    int logicalDelete(@Param("id")  long id);
+    @Update("update user set userRole=#{userRole} where id=#{id}")
+    int updateUserRole(@Param("id") Long id,@Param("userRole") String userRole);
 }
 
 

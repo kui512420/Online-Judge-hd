@@ -25,7 +25,9 @@ import org.springframework.util.DigestUtils;
 import space.kuikui.oj.utils.CaptchaEmailUtils;
 import space.kuikui.oj.utils.CaptchaUtil;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,13 +63,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
      */
     @Override
     public Page<User> userList(UserListRequest userListRequest) {
+
         // 1. 创建 MyBatis-Plus 分页对象
         Page<User> page = new Page<>(userListRequest.getPage(), userListRequest.getSize());
-
         // 2. 构建查询条件
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         int type = userListRequest.getType();
-
         // 3. 根据 type 设置不同的查询条件
         switch (type) {
             case 0: // 全查
@@ -268,6 +269,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     @Override
     public int updateUserAvatar(long id, String userAvatar) {
         return userMapper.updateUserAvatar(id,userAvatar);
+    }
+
+    @Override
+    public int logicalDelete(long id) {
+        return userMapper.logicalDelete(id);
+    }
+
+    @Override
+    public Integer putUserRole(Long id, String userRole) {
+        return userMapper.updateUserRole(id,userRole);
+    }
+
+    @Override
+    public List<User> queryUsers() {
+        return userMapper.selectList(null);
     }
 
 }

@@ -1,5 +1,6 @@
 package space.kuikui.oj.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import space.kuikui.oj.model.entity.Question;
 
@@ -19,8 +20,7 @@ public class QuestionViewVo implements Serializable {
         this.judgeConfig = question.getJudgeConfig();
         this.judgeCase = question.getJudgeCase();
     }
-
-    private long id;
+    private Long id;
     private String title;
     private String content;
     private String judgeConfig;

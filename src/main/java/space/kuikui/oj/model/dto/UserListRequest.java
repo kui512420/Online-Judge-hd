@@ -1,5 +1,6 @@
 package space.kuikui.oj.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
@@ -18,6 +19,7 @@ public class UserListRequest {
      * 3 通过邮箱查询
      */
     private Integer type;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
     private String userAccount;
     private String email;

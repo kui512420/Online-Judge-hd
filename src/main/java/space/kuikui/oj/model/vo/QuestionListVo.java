@@ -1,5 +1,6 @@
 package space.kuikui.oj.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import space.kuikui.oj.model.entity.Question;
 
@@ -26,6 +27,8 @@ public class QuestionListVo implements Serializable {
     /**
      * id
      */
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
     /**

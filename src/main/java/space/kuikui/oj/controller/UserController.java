@@ -1,6 +1,8 @@
 package space.kuikui.oj.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ErrorCode;
@@ -11,6 +13,7 @@ import space.kuikui.oj.model.dto.*;
 import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.utils.CaptchaUtil;
+import space.kuikui.oj.utils.ExportUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +37,25 @@ public class UserController {
     private CaptchaUtil captchaUtil;
     @Resource
     private JwtLoginUtils jwtLoginUtils;
+    @Resource
+    private ExportUtil exportUtil;
+
+    /**
+     * 导出文件
+     * @param response
+     * @throws IOException
+     */
+    @PostMapping("/export")
+    public void export(HttpServletResponse response) throws IOException {
+        try{
+            List<User> users1 = userService.queryUsers();
+            exportUtil.export(response,"xxx.xls",users1,User.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
 
     /**
      * @todo 用户注册
@@ -158,9 +180,55 @@ public class UserController {
         int count = userService.updateUserPassword(id,userPasswordRequest.getUsrePassword(),userPasswordRequest.getNewUserPassword(),userPasswordRequest.getEmail(),userPasswordRequest.getCode());
         return ResultUtils.success("修改成功",count+"");
     }
+
+    /**
+     * 查询用户列表
+     * @param userListRequest
+     * @return
+     */
     @GetMapping("/userList")
     public BaseResponse<Page<User>> getUserList(@ModelAttribute UserListRequest userListRequest) {
         Page<User> userList = userService.userList(userListRequest);
         return ResultUtils.success("查询成功",userList);
+    }
+
+    /**
+     * 删除单个用户
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/user/{id}")
+    public BaseResponse<Boolean> deleteUser(@PathVariable Long id) {
+        boolean result = userService.removeById(id);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户不存在");
+        }
+        return ResultUtils.success("删除成功",true);
+    }
+    /**
+     * 删除多个用户
+     * @param ids 用户 ID 列表
+     * @return 删除结果
+     */
+    @DeleteMapping("/user")
+    public BaseResponse<Boolean> deleteUsers(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "用户 ID 列表不能为空");
+        }
+        boolean result = userService.removeByIds(ids);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "部分或全部用户删除失败");
+        }
+        return ResultUtils.success("删除成功", true);
+    }
+    /**
+     * 更改用户状态
+     * @param id
+     * @return
+     */
+    @PutMapping("/user/{id}/{userRole}")
+    public BaseResponse<Integer> putUserRole(@PathVariable Long id, @PathVariable String userRole) {
+        Integer result = userService.putUserRole(id,userRole);
+        return ResultUtils.success("更改成功",result);
     }
 }
