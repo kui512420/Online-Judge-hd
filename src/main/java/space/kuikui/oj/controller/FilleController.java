@@ -3,7 +3,9 @@ package space.kuikui.oj.controller;
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileWriter;
+import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import space.kuikui.oj.common.JwtLoginUtils;
 import space.kuikui.oj.service.UserService;
 
-import javax.annotation.Resource;
-import java.io.IOException;
+import java.util.Collections;import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,6 +44,8 @@ public class FilleController {
     public void uploadFile(@RequestParam("file") MultipartFile file,@RequestHeader(value = "Accesstoken",required = false) String accesstoken) throws IOException {
         // 检查用户头像目录是否存在
         boolean isExist = FileUtil.exist(USER_HEADER_PATH);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("mediaType", "multipart/form-data");
         // 不存在就创建目录
         if(!isExist){
             FileUtil.mkdir(USER_HEADER_PATH);

@@ -1,12 +1,11 @@
 package space.kuikui.oj.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import space.kuikui.oj.model.dto.UserInfoRequest;
 import space.kuikui.oj.model.dto.UserListRequest;
 import space.kuikui.oj.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -31,4 +30,6 @@ public interface UserService extends IService<User> {
     Integer putUserRole(Long id, String userRole);
 
     List<User> queryUsers();
+
+    Integer updateInfo(UserInfoRequest userInfoRequest);
 }

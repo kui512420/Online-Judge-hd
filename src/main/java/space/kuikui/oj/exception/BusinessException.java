@@ -1,5 +1,6 @@
 package space.kuikui.oj.exception;
 
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import space.kuikui.oj.common.ErrorCode;
 
 /**

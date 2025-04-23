@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import space.kuikui.oj.model.dto.UserInfoRequest;
 import space.kuikui.oj.model.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -37,6 +38,13 @@ public interface UserMapper extends BaseMapper<User> {
     int logicalDelete(@Param("id")  long id);
     @Update("update user set userRole=#{userRole} where id=#{id}")
     int updateUserRole(@Param("id") Long id,@Param("userRole") String userRole);
+    @Update("UPDATE user " +
+            "SET userName = #{userName}, " +
+            "password = #{password}, " +
+            "email = #{email}, " +
+            "userRole = #{userRole} " +
+            "WHERE id = #{id}")
+    Integer updateInfo(UserInfoRequest userInfoRequest);
 }
 
 

@@ -27,4 +27,5 @@ public class QuestionRequest {
     private Integer pageNow;
     private Integer pageSize;
     private List<String> tags;
+    private Integer submitNumOrderType;
 }

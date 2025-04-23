@@ -1,12 +1,12 @@
 package space.kuikui.oj.common;
 
-import cn.hutool.core.date.DateUtil;
 import io.jsonwebtoken.*;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
+import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.model.entity.User;
 
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class JwtLoginUtils {
         try{
             claimsJwts = jwtParser.setSigningKey(sign).parseClaimsJws(token);
         }catch (Exception e){
-            e.printStackTrace();
+            throw  new BusinessException(40000,"");
         }
         Claims claims = claimsJwts.getBody();
         Map<Object,Object> map = new LinkedHashMap();

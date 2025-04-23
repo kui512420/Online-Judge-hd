@@ -1,8 +1,9 @@
 package space.kuikui.oj.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ErrorCode;
@@ -15,9 +16,6 @@ import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.utils.CaptchaUtil;
 import space.kuikui.oj.utils.ExportUtil;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +79,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public BaseResponse<Map<String,String>> register(@RequestBody UserLoginRequset userLoginRequset, HttpServletRequest request) {
+    public BaseResponse<Map<String,String>> login(@RequestBody UserLoginRequset userLoginRequset, HttpServletRequest request) {
         String user = userLoginRequset.getUser();
         String userPassword = userLoginRequset.getPassword();
         String code = userLoginRequset.getCode();
@@ -186,8 +184,8 @@ public class UserController {
      * @param userListRequest
      * @return
      */
-    @GetMapping("/userList")
-    public BaseResponse<Page<User>> getUserList(@ModelAttribute UserListRequest userListRequest) {
+    @PostMapping("/userList")
+    public BaseResponse<Page<User>> getUserList(@RequestBody UserListRequest userListRequest) {
         Page<User> userList = userService.userList(userListRequest);
         return ResultUtils.success("查询成功",userList);
     }
@@ -229,6 +227,16 @@ public class UserController {
     @PutMapping("/user/{id}/{userRole}")
     public BaseResponse<Integer> putUserRole(@PathVariable Long id, @PathVariable String userRole) {
         Integer result = userService.putUserRole(id,userRole);
+        return ResultUtils.success("更改成功",result);
+    }
+    /**
+     * 更改用户信息
+     * @param id
+     * @return
+     */
+    @PutMapping("/userInfo")
+    public BaseResponse<Integer> putUserRole(@RequestBody UserInfoRequest userInfoRequest) {
+        Integer result = userService.updateInfo(userInfoRequest);
         return ResultUtils.success("更改成功",result);
     }
 }

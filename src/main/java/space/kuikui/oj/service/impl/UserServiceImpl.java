@@ -3,6 +3,7 @@ package space.kuikui.oj.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,20 +13,18 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import space.kuikui.oj.common.ErrorCode;
 import space.kuikui.oj.common.JwtLoginUtils;
 import space.kuikui.oj.exception.BusinessException;
+import space.kuikui.oj.model.dto.UserInfoRequest;
 import space.kuikui.oj.model.dto.UserListRequest;
 import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 import org.apache.commons.lang3.StringUtils;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.DigestUtils;
 import space.kuikui.oj.utils.CaptchaEmailUtils;
 import space.kuikui.oj.utils.CaptchaUtil;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +108,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
         User user1 = userMapper.findUserByAccountAndPassowrd(user, encryptPassword);
         User user2 = userMapper.findUserByEmailAndPassowrd(user, encryptPassword);
 
-        boolean cheakCode = captchaUtil.validateCode(request,code);
+        boolean cheakCode = captchaUtil.validateCode((jakarta.servlet.http.HttpServletRequest) request,code);
         if(!cheakCode){
             throw new BusinessException(ErrorCode.PARMS_ERROR,"图片验证码错误");
         }
@@ -284,6 +283,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     @Override
     public List<User> queryUsers() {
         return userMapper.selectList(null);
+    }
+
+    @Override
+    public Integer updateInfo(UserInfoRequest userInfoRequest) {
+        return userMapper.updateInfo(userInfoRequest);
     }
 
 }

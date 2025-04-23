@@ -16,6 +16,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionPostRequest implements Serializable {
+    private Long id;
     private String title;
     private String content;
     private String tags;

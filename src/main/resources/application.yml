@@ -2,6 +2,18 @@ server:
   port: 8080
 # spring 配置
 spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+  ai:
+    openai:
+      base-url: https://api.deepseek.com
+      api-key: sk-f915a54104834ced9d47a554c91377e0
+      chat:
+        options:
+          model: deepseek-chat
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -23,10 +35,11 @@ spring:
           auth: true
           starttls:
             enable: true
-  redis:
-    port: 6379
-    host: localhost
-    database: 0
+  data:
+    redis:
+      host: localhost
+      database: 0
+      port: 6379
 # 持久层设置
 mybatis-plus:
   mapper-locations: classpath:space/kuikui/oj/mapper/*.xml
@@ -41,4 +54,3 @@ mybatis-plus:
 
 code:
   default: example
-

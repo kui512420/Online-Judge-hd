@@ -1,9 +1,9 @@
 package space.kuikui.oj.utils;
 
 import com.alibaba.excel.EasyExcel;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

@@ -31,5 +31,4 @@ public class ExecuteCodeResponse {
      */
     private JudgeInfo judgeInfo;
 
-
 }

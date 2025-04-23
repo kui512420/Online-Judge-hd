@@ -2,6 +2,7 @@ package space.kuikui.oj;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,18 +14,22 @@ import space.kuikui.oj.judeg.codesandbox.impl.ExampleCodeSandBox;
 import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeRequest;
 import space.kuikui.oj.model.entity.Question;
 import space.kuikui.oj.model.entity.User;
+import space.kuikui.oj.service.RabbitMQProducer;
 
-import javax.annotation.Resource;
-import java.lang.reflect.Array;
+import java.util.Collections;import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static space.kuikui.oj.config.RabbitMqConfig.initRabbitMqConfig;
 
 @SpringBootTest
 class OjApplicationTests {
 
     @Resource
     private JwtLoginUtils jwtLoginUtils;
+    @Resource
+    private RabbitMQProducer rabbitMQProducer;
 
     @Value("${code.default}")
     private String type;
@@ -55,11 +60,8 @@ class OjApplicationTests {
         codeSandBox.executeCode(codeRequest);
     }
     @Test
-    void JackTest() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        Question question = new Question();
-        question.setId(123456789012345678L);
-        String json = mapper.writeValueAsString(question);
-        System.out.println(json);  // 检查 id 是否为字符串
+    void RabbitMqTest()  {
+        // 初始启动消息队列
+        initRabbitMqConfig();
     }
 }
