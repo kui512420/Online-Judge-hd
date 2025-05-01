@@ -1,19 +1,19 @@
 package space.kuikui.oj.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import space.kuikui.oj.mapper.QuestionMapper;
 import space.kuikui.oj.mapper.QuestionSubmitMapper;
 import space.kuikui.oj.model.dto.SubmitListRequest;
 import space.kuikui.oj.model.dto.SubmitRequest;
+import space.kuikui.oj.model.entity.Question;
 import space.kuikui.oj.model.entity.QuestionSubmit;
-import space.kuikui.oj.model.entity.User;
-import space.kuikui.oj.service.QuestionService;
 import space.kuikui.oj.service.QuestionSubmitService;
 
-import java.util.List;
 
 /**
  * @author kuikui
@@ -24,6 +24,8 @@ public class QuestionSubmitServiceImpl implements QuestionSubmitService {
 
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
+    @Resource
+    private QuestionMapper questionMapper;
 
     /**
      * @todo 插入提交信息
@@ -31,7 +33,7 @@ public class QuestionSubmitServiceImpl implements QuestionSubmitService {
      * @return
      */
     @Override
-    public int submit(SubmitRequest submitRequest) {
+    public Long submit(SubmitRequest submitRequest) {
         String language = submitRequest.getLanguage();
         String code = submitRequest.getCode();
         long questionId = submitRequest.getQuestionId();
@@ -41,8 +43,20 @@ public class QuestionSubmitServiceImpl implements QuestionSubmitService {
         questionSubmit.setUserId(userId);
         questionSubmit.setCode(code);
         questionSubmit.setQuestionId(questionId);
+        questionSubmitMapper.insert(questionSubmit);
 
-        return questionSubmitMapper.insert(questionSubmit);
+        // 查询用户是否是首次提交
+        QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("questionId", questionId)
+                .eq("userId", userId);
+        boolean exists = questionSubmitMapper.selectCount(queryWrapper) > 0;
+        if(!exists){
+            UpdateWrapper<Question> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("id", questionId);
+            updateWrapper.setSql("submitNum = submitNum + 1");
+            questionMapper.update(Question.builder().build(), updateWrapper);
+        }
+        return questionSubmit.getId();
     }
 
     /**

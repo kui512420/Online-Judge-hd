@@ -1,5 +1,6 @@
 package space.kuikui.oj.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.util.Date;
@@ -10,12 +11,15 @@ import java.util.Date;
  */
 @Data
 public class QuestionSubmit {
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
     private String language;
     private String code;
     private String judgeInfo;
     private Integer status;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long questionId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long userId;
     private Date createTime;
     private Date updateTime;

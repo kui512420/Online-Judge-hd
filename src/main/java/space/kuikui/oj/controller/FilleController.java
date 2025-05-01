@@ -32,7 +32,7 @@ public class FilleController {
     @Resource
     private UserService userService;
 
-    private final static String USER_HEADER_PATH = "C:\\Users\\30767\\Desktop\\git\\qq\\userHeader\\";
+    private final static String USER_HEADER_PATH = "C:\\Users\\30767\\Desktop\\git\\userHeader\\";
 
     /**
      * @todo 上传头像
@@ -40,12 +40,11 @@ public class FilleController {
      * @param accesstoken
      * @throws IOException
      */
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload")
     public void uploadFile(@RequestParam("file") MultipartFile file,@RequestHeader(value = "Accesstoken",required = false) String accesstoken) throws IOException {
         // 检查用户头像目录是否存在
         boolean isExist = FileUtil.exist(USER_HEADER_PATH);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("mediaType", "multipart/form-data");
+
         // 不存在就创建目录
         if(!isExist){
             FileUtil.mkdir(USER_HEADER_PATH);

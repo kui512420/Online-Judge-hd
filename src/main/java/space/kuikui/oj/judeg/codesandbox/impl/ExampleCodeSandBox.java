@@ -6,6 +6,8 @@ import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeResponse;
 import space.kuikui.oj.judeg.codesandbox.model.enums.JudgeInfoMessageEnum;
 import space.kuikui.oj.model.entity.JudgeInfo;
 
+import java.util.List;
+
 /**
  * 事例代码沙箱
  * @author kuikui
@@ -14,17 +16,24 @@ import space.kuikui.oj.model.entity.JudgeInfo;
 public class ExampleCodeSandBox implements CodeSandBox {
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
-
-        System.out.println("实例代码沙箱");
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
-        executeCodeResponse.setStatus(1000);
-        executeCodeResponse.setMessage(String.valueOf(JudgeInfoMessageEnum.SUCCESS));
-        executeCodeResponse.setOutputList(executeCodeRequest.getInputList());
+        List<String> inputList = executeCodeRequest.getInputList();
+        String code =  executeCodeRequest.getCode();
+        String language = executeCodeRequest.getLanguage();
         JudgeInfo judgeInfo = new JudgeInfo();
         judgeInfo.setMessage("通过");
         judgeInfo.setTime(1000l);
         judgeInfo.setMemory(100l);
-        executeCodeResponse.setJudgeInfo(judgeInfo);
+
+        // 判题
+
+
+        ExecuteCodeResponse.builder()
+                .message("成功")
+                .status(1)
+                .judgeInfo(judgeInfo)
+                .outputList(null)
+                .build();
         return executeCodeResponse;
     }
 }

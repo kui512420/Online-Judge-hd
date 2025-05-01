@@ -15,7 +15,9 @@ import space.kuikui.oj.common.JwtLoginUtils;
 import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.model.dto.UserInfoRequest;
 import space.kuikui.oj.model.dto.UserListRequest;
+import space.kuikui.oj.model.entity.LoginLog;
 import space.kuikui.oj.model.entity.User;
+import space.kuikui.oj.service.LoginLogService;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.mapper.UserMapper;
 import org.springframework.stereotype.Service;
@@ -24,10 +26,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.DigestUtils;
 import space.kuikui.oj.utils.CaptchaEmailUtils;
 import space.kuikui.oj.utils.CaptchaUtil;
+import space.kuikui.oj.utils.IpUtil;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static space.kuikui.oj.utils.IpUtil.getIpAddress;
 
 /**
 * @author 30767
@@ -48,6 +54,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     private JwtLoginUtils jwtLoginUtils;
     @Resource
     private CaptchaUtil captchaUtil;
+    @Resource
+    private LoginLogService loginLogService;
+    @Resource
+    private IpUtil ipUtil;
 
     @Value("${spring.mail.username}")
     private String from;
@@ -92,7 +102,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     }
 
     /**
-     *
+     * @todo 登录
      * @param user
      * @param userPassword
      * @param code
@@ -101,7 +111,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
      */
     @Override
     public Map<String, String> userLogin(String user, String userPassword, String code, HttpServletRequest request) {
+        // 获取设备信息
+        String device = request.getHeader("User-Agent");
+        String ip = getIpAddress(request);
+        LoginLog loginLog = null;
         if(StringUtils.isAnyBlank(user,userPassword,code)){
+            loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("参数不能为空").status(0).build();
+            loginLogService.addLoginLog(loginLog);
             throw new BusinessException(ErrorCode.PARMS_ERROR,"参数不能为空");
         }
         String encryptPassword =  DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
@@ -110,11 +126,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
 
         boolean cheakCode = captchaUtil.validateCode((jakarta.servlet.http.HttpServletRequest) request,code);
         if(!cheakCode){
+            loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("图片验证码错误").status(0).build();
+            loginLogService.addLoginLog(loginLog);
             throw new BusinessException(ErrorCode.PARMS_ERROR,"图片验证码错误");
         }
-
         Map<String, String> map = new HashMap<>();
         if(user1==null && user2==null){
+            loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("账号或密码错误").status(0).build();
+            loginLogService.addLoginLog(loginLog);
             throw new BusinessException(ErrorCode.PARMS_ERROR, "账号或密码错误");
         }else{
             if(user1!=null){
@@ -128,6 +147,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
                 map.put("AccessToken",accessToken);
                 map.put("RefreshToken",refreshToken);
             }
+            loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("登录成功").status(1).build();
+            loginLogService.addLoginLog(loginLog);
         }
         return map;
     }

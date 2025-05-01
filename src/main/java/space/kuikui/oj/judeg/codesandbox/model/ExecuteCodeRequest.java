@@ -17,9 +17,16 @@ import java.util.List;
 @AllArgsConstructor
 public class ExecuteCodeRequest {
 
+    /**
+     * 用户提供的测试数据
+     */
     private List<String> inputList;
-
+    /**
+     * 用户编写的代码
+     */
     private String code;
-
+    /**
+     * 用户编写代码的编程语言
+     */
     private String language;
 }

@@ -2,6 +2,7 @@ package space.kuikui.oj.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ErrorCode;
@@ -11,10 +12,13 @@ import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.model.dto.QuestionPostRequest;
 import space.kuikui.oj.model.dto.QuestionRequest;
 import space.kuikui.oj.model.entity.Question;
+import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.model.vo.QuestionListVo;
 import space.kuikui.oj.model.vo.QuestionViewVo;
 import space.kuikui.oj.service.QuestionService;
+import space.kuikui.oj.utils.ExportUtil;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -27,6 +31,22 @@ public class QuestionController {
 
     @Resource
     private QuestionService questionService;
+    @Resource
+    private ExportUtil exportUtil;
+    /**
+     * 导出文件
+     * @param response
+     * @throws IOException
+     */
+    @PostMapping("/export")
+    public void export(HttpServletResponse response) throws IOException {
+        try{
+            List<Question> users1 = questionService.queryQuestions();
+            exportUtil.export(response,"xxx.xls",users1,Question.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
     @PostMapping("/questions")
     public BaseResponse<Page<QuestionListVo>> questions(@RequestBody QuestionRequest questionRequest) {
@@ -58,6 +78,7 @@ public class QuestionController {
         Integer count = questionService.put(questionPostRequest);
         return ResultUtils.success("新增题目成功",count);
     }
+
     @PostMapping("/submit")
     public BaseResponse<String> submit(){
         questionService.submit();

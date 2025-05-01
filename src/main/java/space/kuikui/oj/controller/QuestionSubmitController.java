@@ -31,21 +31,40 @@ public class QuestionSubmitController {
     @Resource
     private RabbitMQProducer rabbitMQProducer;
 
-
+    /**
+     * 提交检测代码
+     * @param submitRequest
+     * @param token
+     * @return
+     * @throws JsonProcessingException
+     */
     @PostMapping("/sub")
     public BaseResponse<String> submitQuestion(@RequestBody SubmitRequest submitRequest, @RequestHeader(value = "Accesstoken",required = false) String token) throws JsonProcessingException {
         Long id = null;
+        String userName = "";
         try {
+            // 提交者的 id 和 名称
             id = (Long) jwtLoginUtils.jwtPeAccess(token).get("id");
+            userName = (String) jwtLoginUtils.jwtPeAccess(token).get("userName");
         }catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(submitRequest.getQuestionId());
         submitRequest.setUserId(id);
+        submitRequest.setUserName(userName);
+        // 保存 用户提交的信息
+        Long subId = questionSubmitService.submit(submitRequest);
+        submitRequest.setId(subId);
+        // 添加 判题任务 到队列
         rabbitMQProducer.sendMessage("code_exchange","routingkey", submitRequest);
-        int count = questionSubmitService.submit(submitRequest);
         return ResultUtils.success("提交成功","");
     }
+
+    /**
+     * 获取 代码沙箱执行后的列表
+     * @param submitListRequest
+     * @param token
+     * @return
+     */
     @PostMapping("/list")
     public BaseResponse<Page<QuestionSubmit>> submitQuestionList(@RequestBody SubmitListRequest submitListRequest, @RequestHeader(value = "Accesstoken",required = false) String token) {
         Long id = null;

@@ -1,5 +1,6 @@
 package space.kuikui.oj;
 
+import cn.hutool.core.io.file.FileReader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
@@ -59,9 +60,5 @@ class OjApplicationTests {
                         .build();
         codeSandBox.executeCode(codeRequest);
     }
-    @Test
-    void RabbitMqTest()  {
-        // 初始启动消息队列
-        initRabbitMqConfig();
-    }
+
 }

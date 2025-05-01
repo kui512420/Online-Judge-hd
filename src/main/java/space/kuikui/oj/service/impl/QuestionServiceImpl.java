@@ -141,6 +141,11 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     public Integer updateInfo(QuestionPostRequest questionPostRequest) {
         return questionMapper.updateQuestion(questionPostRequest);
     }
+
+    @Override
+    public List<Question> queryQuestions() {
+        return questionMapper.selectList(null);
+    }
 }
 
 

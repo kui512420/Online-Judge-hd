@@ -65,6 +65,13 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.docker-java/docker-java -->
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -162,7 +169,7 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>space.kuikui.oj.OjApplication</mainClass>
-                    <skip>true</skip>
+                    <skip>false</skip>
                 </configuration>
                 <executions>
                     <execution>

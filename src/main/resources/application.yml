@@ -45,12 +45,12 @@ mybatis-plus:
   mapper-locations: classpath:space/kuikui/oj/mapper/*.xml
   configuration:
     map-underscore-to-camel-case: false
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+   # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
       logic-delete-field: isDelete #
       logic-delete-value: 1
       logic-not-delete-value: 0
-
+# 代码沙箱设置
 code:
   default: example

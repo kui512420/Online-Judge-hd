@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import space.kuikui.oj.model.dto.QuestionPostRequest;
 import space.kuikui.oj.model.dto.QuestionRequest;
 import space.kuikui.oj.model.entity.Question;
+import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.model.vo.QuestionListVo;
 import space.kuikui.oj.model.vo.QuestionViewVo;
+
+import java.util.List;
 
 /**
 * @author 30767
@@ -23,4 +26,6 @@ public interface QuestionService extends IService<Question> {
     Question findDetail(Long id);
 
     Integer updateInfo(QuestionPostRequest questionPostRequest);
+
+    List<Question> queryQuestions();
 }

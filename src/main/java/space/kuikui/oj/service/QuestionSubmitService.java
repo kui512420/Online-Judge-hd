@@ -10,7 +10,7 @@ import space.kuikui.oj.model.entity.QuestionSubmit;
  * @date 2025/4/10 23:36
  */
 public interface QuestionSubmitService {
-    int submit(SubmitRequest submitRequest);
+    Long submit(SubmitRequest submitRequest);
 
     Page<QuestionSubmit> list(SubmitListRequest submitListRequest);
 }

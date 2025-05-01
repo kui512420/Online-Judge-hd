@@ -1,5 +1,6 @@
 package space.kuikui.oj.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
@@ -8,7 +9,11 @@ import lombok.Data;
  */
 @Data
 public class SubmitRequest {
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private long id;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private long userId;
+    private String userName;
     private String language;
     private String code;
     private long questionId;

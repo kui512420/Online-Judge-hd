@@ -3,16 +3,21 @@ package space.kuikui.oj.judeg;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ResultUtils;
 import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeResponse;
+import space.kuikui.oj.model.entity.JudgeInfo;
 import space.kuikui.oj.model.entity.Question;
 import space.kuikui.oj.model.entity.TestCase;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author kuikui
@@ -31,13 +36,20 @@ public class Judeg {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void judgeAllTestCases(String code, Question question) throws InterruptedException, IOException {
+    public ExecuteCodeResponse judgeAllTestCases(String code, Question question) throws InterruptedException, IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         ExecuteCodeResponse response = new ExecuteCodeResponse();
+        List<String> outputList = new ArrayList<>();
+        boolean allPassed = true;
 
         if (question.getJudgeCase() == null || question.getJudgeCase().isEmpty()) {
+            response.setMessage("没有可用的测试用例");
+            response.setStatus(0);
+            response.setOutputList(outputList);
+            return response;
         }
-        for (TestCase oj: objectMapper.readValue(question.getJudgeCase(), TestCase[].class)) {
+
+        for (TestCase oj : objectMapper.readValue(question.getJudgeCase(), TestCase[].class)) {
             String inputData = oj.getInput();
             String expectedOutput = oj.getOutput();
 
@@ -53,16 +65,25 @@ public class Judeg {
             }
 
             String actualOutput = outputStream.toString().trim();
+            outputList.add(actualOutput);
 
             // 验证输出结果
-            if (actualOutput.equals(expectedOutput)) {
-                response.setMessage("通过");
-                response.setStatus(1);
-                System.out.println("测试用例通过: 输入 = " + inputData + ", 期望输出 = " + expectedOutput + ", 实际输出 = " + actualOutput);
-            } else {
-                System.err.println("测试用例失败: 输入 = " + inputData + ", 期望输出 = " + expectedOutput + ", 实际输出 = " + actualOutput);
+            System.out.println(actualOutput+"---"+expectedOutput);
+            if (!actualOutput.equals(expectedOutput)) {
+                allPassed = false;
             }
         }
+
+        if (allPassed) {
+            response.setMessage("通过");
+            response.setStatus(1);
+            //response.setJudgeInfo();
+        } else {
+            response.setMessage("未通过");
+            response.setStatus(0);
+        }
+        response.setOutputList(outputList);
+        return response;
     }
 
     /**
