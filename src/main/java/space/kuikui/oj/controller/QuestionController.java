@@ -33,6 +33,8 @@ public class QuestionController {
     private QuestionService questionService;
     @Resource
     private ExportUtil exportUtil;
+    @Resource
+    private JwtLoginUtils jwtLoginUtils;
     /**
      * 导出文件
      * @param response
@@ -65,18 +67,17 @@ public class QuestionController {
     }
 
     @PostMapping("/question")
-    public BaseResponse<Integer> question(@RequestHeader(value = "AccessToken",required = false) String accessToken,@RequestBody QuestionPostRequest questionPostRequest) {
+    public BaseResponse<Integer> question(@RequestBody QuestionPostRequest questionPostRequest,@RequestHeader(value = "Accesstoken",required = false) String accessToken) {
         Long id = null;
-        System.out.println(accessToken);
-        try{
-            JwtLoginUtils jwtLoginUtils = new JwtLoginUtils();
-            id = (Long) jwtLoginUtils.jwtPeAccess(accessToken).get("id");
-            questionPostRequest.setUserId(id);
-        }catch (Exception e){
-            throw new BusinessException(ErrorCode.PARMS_ERROR,"令牌无效");
-        }
+
+        id = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id")) ;
+        questionPostRequest.setUserId(id);
         Integer count = questionService.put(questionPostRequest);
-        return ResultUtils.success("新增题目成功",count);
+        if(count > 0){
+            return ResultUtils.success("新增题目成功",count);
+        }else{
+            return ResultUtils.error(50000,"新增题目失败",count);
+        }
     }
 
     @PostMapping("/submit")

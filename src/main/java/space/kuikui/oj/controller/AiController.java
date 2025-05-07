@@ -31,8 +31,9 @@ public class AiController {
     @PostMapping("/ai")
     public BaseResponse<String> ai(@RequestBody QuestionConfingRequest questionConfingRequest) {
         StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("生成 ").append("类型是 ").append(questionConfingRequest.getQuestionType())
+        promptBuilder.append("生成 ").append("题目描述是").append(questionConfingRequest.getQuestionType())
                 .append("，题目难度是 ").append(questionConfingRequest.getQuestionDifficulty()).append("，测试用例条数：").append(questionConfingRequest.getQuestionCount());
+        System.out.println(promptBuilder.toString());
         String response = chatClient.prompt()
                 .user(promptBuilder.toString())
                 .call()

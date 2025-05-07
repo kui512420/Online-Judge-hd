@@ -7,6 +7,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -17,7 +18,10 @@ import space.kuikui.oj.model.dto.UserInfoRequest;
 import space.kuikui.oj.model.dto.UserListRequest;
 import space.kuikui.oj.model.entity.LoginLog;
 import space.kuikui.oj.model.entity.User;
+import space.kuikui.oj.model.entity.UserRank;
 import space.kuikui.oj.service.LoginLogService;
+import space.kuikui.oj.service.RedisSetTokenExample;
+import space.kuikui.oj.service.UserRankService;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.mapper.UserMapper;
 import org.springframework.stereotype.Service;
@@ -32,6 +36,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static space.kuikui.oj.utils.IpUtil.getIpAddress;
 
@@ -58,7 +63,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
     private LoginLogService loginLogService;
     @Resource
     private IpUtil ipUtil;
-
+    @Resource
+    private UserRankService userRankService;
+    @Resource
+    private RedisSetTokenExample redisSetTokenExample;
+    @Value("${jwt.timeAccess}")
+    private Long frtimeAccessom;
     @Value("${spring.mail.username}")
     private String from;
     private static String SALT = "KUIKUI";
@@ -124,7 +134,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
         User user1 = userMapper.findUserByAccountAndPassowrd(user, encryptPassword);
         User user2 = userMapper.findUserByEmailAndPassowrd(user, encryptPassword);
 
-        boolean cheakCode = captchaUtil.validateCode((jakarta.servlet.http.HttpServletRequest) request,code);
+        boolean cheakCode = captchaUtil.validateCode(request,code);
         if(!cheakCode){
             loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("图片验证码错误").status(0).build();
             loginLogService.addLoginLog(loginLog);
@@ -137,15 +147,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
             throw new BusinessException(ErrorCode.PARMS_ERROR, "账号或密码错误");
         }else{
             if(user1!=null){
+                redisSetTokenExample.deleteAllTokensByUserId(user1.getId().toString());
                 String accessToken = jwtLoginUtils.jwtBdAccess(user1);
-                String RefreshToken = jwtLoginUtils.jwtBdRefresh(user1.getId(),request);
-                map.put("accessToken",accessToken);
-                map.put("RefreshToken",RefreshToken);
-            }else{
-                String accessToken = jwtLoginUtils.jwtBdAccess(user2);
-                String refreshToken = jwtLoginUtils.jwtBdRefresh(user2.getId(),request);
+                redisSetTokenExample.saveTokenToSet(String.valueOf(user1.getId()),accessToken,frtimeAccessom, TimeUnit.MILLISECONDS);
                 map.put("AccessToken",accessToken);
-                map.put("RefreshToken",refreshToken);
+            }else{
+                redisSetTokenExample.deleteAllTokensByUserId(user2.getId().toString());
+                String accessToken = jwtLoginUtils.jwtBdAccess(user2);
+                redisSetTokenExample.saveTokenToSet(String.valueOf(user2.getId()),accessToken,frtimeAccessom, TimeUnit.MILLISECONDS);
+                map.put("AccessToken",accessToken);
             }
             loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("登录成功").status(1).build();
             loginLogService.addLoginLog(loginLog);
@@ -178,7 +188,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
                 throw new BusinessException(ErrorCode.PARMS_ERROR,"验证码错误或失效");
             }
 
-
         synchronized (userAccount.intern()) {
             // 账户不能重复
             QueryWrapper<User> queryWrapperUser = new QueryWrapper<>();
@@ -199,15 +208,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
             user.setEmail(email);
-            boolean saveResult = this.save(user);
-            if (!saveResult) {
+            int insertCount = userMapper.insert(user);
+            if (insertCount!=1) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"注册失败，数据库错误");
             }else{
-                String accessToken = jwtLoginUtils.jwtBdAccess(user);
-                String refreshToken = jwtLoginUtils.jwtBdRefresh(user.getId(),request);
+                // 把用户加入排行榜
+                userRankService.addUserRank(UserRank.builder().userId(user.getId()).build());
+                QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("userAccount", userAccount);
+                User user1 = userMapper.selectOne(queryWrapper);
+                String accessToken = jwtLoginUtils.jwtBdAccess(user1);
                 Map<String,String> map = new HashMap<>();
+                redisSetTokenExample.saveTokenToSet(String.valueOf(user.getId()),accessToken,frtimeAccessom, TimeUnit.MILLISECONDS);
                 map.put("AccessToken",accessToken);
-                map.put("RefreshToken",refreshToken);
                 return map;
             }
         }

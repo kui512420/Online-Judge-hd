@@ -12,8 +12,13 @@ import space.kuikui.oj.common.ResultUtils;
 import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.model.dto.CompetitionAddRequest;
 import space.kuikui.oj.model.dto.CompetitionRequest;
+import space.kuikui.oj.model.entity.CompetitionQuestion;
 import space.kuikui.oj.model.vo.CompetitionVO;
+import space.kuikui.oj.model.vo.QuestionListVo;
+import space.kuikui.oj.service.CompetitionQuestionService;
 import space.kuikui.oj.service.CompetitionService;
+
+import java.util.List;
 
 /**
  * 竞赛管理控制器
@@ -27,6 +32,10 @@ public class CompetitionController {
     
     @Resource
     private CompetitionService competitionService;
+    @Resource
+    private CompetitionQuestionService competitionQuestionService;
+    @Resource
+    private JwtLoginUtils jwtLoginUtils;
     
     /**
      * 分页查询竞赛列表
@@ -56,25 +65,19 @@ public class CompetitionController {
      * @return 竞赛ID
      */
     @PostMapping("/add")
-    public BaseResponse<Long> addCompetition(@RequestHeader(value = "AccessToken", required = false) String accessToken,
-                                                @RequestBody CompetitionAddRequest addRequest) {
+    public BaseResponse<Long> addCompetition(
+                                                @RequestBody CompetitionAddRequest addRequest,@RequestHeader(value = "Accesstoken", required = false) String accessToken) {
         if (addRequest == null) {
             throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
         }
-        
         // 从令牌中获取用户ID
         Long creatorId = null;
         try {
             log.info("添加竞赛请求: {}", addRequest);
-            
-            if (accessToken == null || accessToken.isEmpty()) {
-                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录，请先登录");
-            }
-            
-            JwtLoginUtils jwtLoginUtils = new JwtLoginUtils();
+
             // 注意：由于原有代码使用的是Long类型，但Competition使用的是Integer
             // 这里进行类型转换
-            Long userId = (Long) jwtLoginUtils.jwtPeAccess(accessToken).get("id");
+            Long userId = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id")) ;
             if (userId == null) {
                 throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "登录信息获取失败");
             }
@@ -110,7 +113,32 @@ public class CompetitionController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取竞赛详情失败: " + e.getMessage());
         }
     }
-    
+    /**
+     * 获取竞赛题目
+     * @param id 竞赛ID
+     * @return 竞赛题目
+     */
+    @GetMapping("/questions/{id}")
+    public BaseResponse<List<QuestionListVo>> getCompetitionQuestions(@PathVariable Long id) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
+        }
+        try {
+            CompetitionVO competition = competitionService.getCompetitionDetail(id);
+
+            // 判断竞赛是否开始
+            if (competition.getStatus() == 0) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "竞赛未开始，无法查看题目");
+            }
+            List<QuestionListVo> competitionQuestions = competitionQuestionService.getQuestions(id);
+            return ResultUtils.success("获取竞赛题目成功", competitionQuestions);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取竞赛详情失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取竞赛详情失败: " + e.getMessage());
+        }
+    }
     /**
      * 删除竞赛（逻辑删除）
      * @param accessToken 访问令牌
@@ -130,7 +158,6 @@ public class CompetitionController {
                 throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录，请先登录");
             }
             
-            JwtLoginUtils jwtLoginUtils = new JwtLoginUtils();
             String userRole = (String) jwtLoginUtils.jwtPeAccess(accessToken).get("userRole");
             
             // 仅管理员可删除

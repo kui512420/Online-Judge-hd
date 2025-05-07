@@ -3,6 +3,10 @@ package space.kuikui.oj.controller;
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileWriter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -40,7 +44,16 @@ public class FilleController {
      * @param accesstoken
      * @throws IOException
      */
-    @PostMapping(value = "/upload")
+    @PostMapping(value = "/file/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "上传文件", description = "支持文件上传，返回 JSON 格式响应",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE
+                           )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "文件上传成功",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            })
     public void uploadFile(@RequestParam("file") MultipartFile file,@RequestHeader(value = "Accesstoken",required = false) String accesstoken) throws IOException {
         // 检查用户头像目录是否存在
         boolean isExist = FileUtil.exist(USER_HEADER_PATH);
@@ -50,7 +63,7 @@ public class FilleController {
             FileUtil.mkdir(USER_HEADER_PATH);
         }
         Map<Object, Object> map = jwtLoginUtils.jwtPeAccess(accesstoken);
-        long id = (long) map.get("id");
+        String id = map.get("id").toString();
         StringBuilder header = new StringBuilder();
         header.append(USER_HEADER_PATH).append(id).append(".png");
         // 获取文件的类型
@@ -60,7 +73,7 @@ public class FilleController {
         }else{
             FileWriter writer = new FileWriter(String.valueOf(header));
             writer.writeFromStream(file.getInputStream());
-            userService.updateUserAvatar(id,"api/file/userheader/"+id+".png");
+            userService.updateUserAvatar(Long.valueOf(id),"api/file/userheader/"+id+".png");
         }
     }
 

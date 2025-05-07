@@ -31,7 +31,7 @@ public class ExampleCodeSandBox implements CodeSandBox {
         ExecuteCodeResponse.builder()
                 .message("成功")
                 .status(1)
-                .judgeInfo(judgeInfo)
+                .judgeInfo(null)
                 .outputList(null)
                 .build();
         return executeCodeResponse;

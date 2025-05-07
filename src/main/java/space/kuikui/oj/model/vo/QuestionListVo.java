@@ -54,6 +54,7 @@ public class QuestionListVo implements Serializable {
     /**
      * 创建用户 id
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long userId;
 
     /**

@@ -4,14 +4,20 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import space.kuikui.oj.common.BaseResponse;
 import space.kuikui.oj.common.ErrorCode;
 import space.kuikui.oj.common.JwtLoginUtils;
 import space.kuikui.oj.common.ResultUtils;
 import space.kuikui.oj.exception.BusinessException;
+import space.kuikui.oj.mapper.UserMapper;
 import space.kuikui.oj.model.dto.*;
 import space.kuikui.oj.model.entity.User;
+import space.kuikui.oj.service.QuestionSubmitService;
+import space.kuikui.oj.service.RedisSetTokenExample;
+import space.kuikui.oj.service.UserRankService;
 import space.kuikui.oj.service.UserService;
 import space.kuikui.oj.utils.CaptchaUtil;
 import space.kuikui.oj.utils.ExportUtil;
@@ -20,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kuikui
@@ -32,11 +39,18 @@ public class UserController {
     @Resource
     private UserService userService;
     @Resource
+    private QuestionSubmitService questionSubmitService;
+
+    @Resource
     private CaptchaUtil captchaUtil;
     @Resource
     private JwtLoginUtils jwtLoginUtils;
     @Resource
     private ExportUtil exportUtil;
+    @Resource
+    private RedisSetTokenExample redisSetTokenExample;
+    @Autowired
+    private UserMapper userMapper;
 
     /**
      * 导出文件
@@ -54,6 +68,25 @@ public class UserController {
     }
 
 
+    /**
+     * @todo 用户提交数据
+     * @param accessToken
+     *
+     * @return
+     */
+    @PostMapping("/questionCommitInfo")
+    public BaseResponse<UserCommitRequest> questionCommitInfo(@RequestHeader(value = "Accesstoken",required = false) String accessToken) {
+        Map<Object, Object> map = new HashMap<>();
+        try{
+            map = jwtLoginUtils.jwtPeAccess(accessToken);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR,"未登录") ;
+        }
+        Long userId =Long.valueOf((String) map.get("id")) ;
+
+        return ResultUtils.success("查询用户提交记录成功",questionSubmitService.userCommitInfo(userId));
+    }
+
 
     /**
      * @todo 用户注册
@@ -69,6 +102,7 @@ public class UserController {
         String email = userRegisterRequest.getEmail();
         String emailCode = userRegisterRequest.getEmailCode();
         Map<String,String> result = userService.userRegister(userAccount,userPassword,userCheakPassword,email,emailCode,request);
+
         return ResultUtils.success("注册成功",result);
     }
 
@@ -89,6 +123,18 @@ public class UserController {
     }
 
     /**
+     * 用户退出登录
+     * @param accessToken
+     * @return
+     */
+    @PostMapping("/OutLogin")
+    public BaseResponse<Boolean> outLogin(String accessToken) {
+
+        boolean isDel = redisSetTokenExample.deleteTokenFromSet((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"),accessToken);
+        return ResultUtils.success("退出登录成功",isDel);
+    }
+
+    /**
      * @todo 获取登录信息
      * @param accessToken
      * @return
@@ -96,26 +142,8 @@ public class UserController {
     @GetMapping("/get/login")
     public BaseResponse<Map<Object, Object>> getLogin(@RequestHeader(value = "Accesstoken",required = false) String accessToken) {
         Map<Object, Object> map = new HashMap<>();
-        try{
-            map = jwtLoginUtils.jwtPeAccess(accessToken);
-        }catch (Exception e){
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR,"未登录") ;
-        }
+        map = jwtLoginUtils.jwtPeAccess(accessToken);
         return ResultUtils.success("获取信息成功",map);
-    }
-    @GetMapping("/refreshToken")
-    public BaseResponse<Map<Object, Object>> refreshToken(@RequestHeader(value = "RefreshToken",required = false) String refreshToken) {
-        Map<Object, Object> map = new HashMap<>();
-        try{
-            long id = (long) jwtLoginUtils.jwtPeRefresh(refreshToken).get("id");
-            User user = userService.userInfo(id);
-            String accesstoken = jwtLoginUtils.jwtBdAccess(user);
-            map.put("accesstoken",accesstoken);
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new BusinessException(ErrorCode.LOGIN_TIMEOUT,"登录过期") ;
-        }
-        return ResultUtils.success("刷新token成功",map);
     }
 
     /**
@@ -148,7 +176,7 @@ public class UserController {
     @PutMapping("/userName")
     public BaseResponse<String> setUerName(@RequestHeader(value = "Accesstoken",required = false) String accessToken,@RequestBody String userName) {
         Map<Object, Object> map = jwtLoginUtils.jwtPeAccess(accessToken);
-        long id = (long) map.get("id");
+        long id = Long.valueOf((String) map.get("id"));
         int count = userService.updateUserName(id,userName);
         return ResultUtils.success("修改成功",count+"");
     }
@@ -160,7 +188,7 @@ public class UserController {
     @PutMapping("/userProfile")
     public BaseResponse<String> setUserProfile(@RequestHeader(value = "Accesstoken",required = false) String accessToken,@RequestBody String userProfile) {
         Map<Object, Object> map = jwtLoginUtils.jwtPeAccess(accessToken);
-        long id = (long) map.get("id");
+        long id = Long.valueOf((String) map.get("id"));
         int count = userService.updateUserProfile(id,userProfile);
         return ResultUtils.success("修改成功",count+"");
     }
@@ -174,7 +202,7 @@ public class UserController {
     @PutMapping("/userPassword")
     public BaseResponse<String> setUserPassword(@RequestHeader(value = "Accesstoken" ,required = false) String accessToken, @RequestBody UserPasswordRequest userPasswordRequest) {
         Map<Object, Object> map = jwtLoginUtils.jwtPeAccess(accessToken);
-        long id = (long) map.get("id");
+        long id = Long.valueOf((String) map.get("id"));
         int count = userService.updateUserPassword(id,userPasswordRequest.getUsrePassword(),userPasswordRequest.getNewUserPassword(),userPasswordRequest.getEmail(),userPasswordRequest.getCode());
         return ResultUtils.success("修改成功",count+"");
     }
@@ -238,5 +266,30 @@ public class UserController {
     public BaseResponse<Integer> putUserRole(@RequestBody UserInfoRequest userInfoRequest) {
         Integer result = userService.updateInfo(userInfoRequest);
         return ResultUtils.success("更改成功",result);
+    }
+
+    /**
+     * 更新个人信息-刷新延续token
+     * @param accessToken
+     * @return
+     */
+    @GetMapping("/refreshToken")
+    public BaseResponse<String> refreshToken(@RequestHeader(value = "Accesstoken") String accessToken) {
+        String token = "";
+        try{
+
+            Long id = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+            Long RemainingTime = redisSetTokenExample.getTokenRemainingTime(String.valueOf(id),TimeUnit.MILLISECONDS);
+            boolean isDel = redisSetTokenExample.deleteTokenFromSet(String.valueOf(id),accessToken);
+            System.out.println(isDel);
+            User user = userMapper.findUserById(id);
+            token = jwtLoginUtils.jwtBdAccess(user);
+
+            // 延续剩余的时间
+            redisSetTokenExample.saveTokenToSet(String.valueOf(id),token,RemainingTime, TimeUnit.MILLISECONDS);
+        }catch (Exception e){
+            return ResultUtils.error(50000,"刷新token失败",null);
+        }
+        return ResultUtils.success("刷新token成功",token);
     }
 }

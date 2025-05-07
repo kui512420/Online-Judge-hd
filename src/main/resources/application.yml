@@ -54,3 +54,7 @@ mybatis-plus:
 # 代码沙箱设置
 code:
   default: example
+# jwt设置
+jwt:
+  sign: 512420
+  timeAccess: 2592000000

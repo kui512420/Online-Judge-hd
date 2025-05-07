@@ -1,6 +1,7 @@
 package space.kuikui.oj.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * @date 2025/4/28 15:30
  */
 @Data
+@TableName("competition_question")
 public class CompetitionQuestion {
     /**
      * ID

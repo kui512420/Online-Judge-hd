@@ -41,15 +41,16 @@ public class Judeg {
         ExecuteCodeResponse response = new ExecuteCodeResponse();
         List<String> outputList = new ArrayList<>();
         boolean allPassed = true;
-
         if (question.getJudgeCase() == null || question.getJudgeCase().isEmpty()) {
             response.setMessage("没有可用的测试用例");
             response.setStatus(0);
             response.setOutputList(outputList);
             return response;
         }
-
+        List<JudgeInfo> judgeInfoList = new ArrayList<>();
         for (TestCase oj : objectMapper.readValue(question.getJudgeCase(), TestCase[].class)) {
+
+            JudgeInfo judgeInfo= new JudgeInfo();
             String inputData = oj.getInput();
             String expectedOutput = oj.getOutput();
 
@@ -57,23 +58,29 @@ public class Judeg {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             PrintStream originalOut = System.out;
             System.setOut(new PrintStream(outputStream));
+            Long startTime = System.currentTimeMillis();
 
             try {
                 judeg(code, inputData, question);
             } finally {
                 System.setOut(originalOut);
             }
-
+            Long endTime = System.currentTimeMillis();
             String actualOutput = outputStream.toString().trim();
             outputList.add(actualOutput);
-
+            judgeInfo.setUserOutput(actualOutput);
             // 验证输出结果
-            System.out.println(actualOutput+"---"+expectedOutput);
-            if (!actualOutput.equals(expectedOutput)) {
+            if(actualOutput.equals(expectedOutput)){
+                response.setMessage("通过");
+                judgeInfo.setPassed(1);
+            }else{
+                judgeInfo.setPassed(0);
+                response.setMessage("未通过");
                 allPassed = false;
             }
+            judgeInfo.setTime(endTime-startTime);
+            judgeInfoList.add(judgeInfo);
         }
-
         if (allPassed) {
             response.setMessage("通过");
             response.setStatus(1);
@@ -82,6 +89,7 @@ public class Judeg {
             response.setMessage("未通过");
             response.setStatus(0);
         }
+        response.setJudgeInfo(judgeInfoList);
         response.setOutputList(outputList);
         return response;
     }

@@ -29,6 +29,6 @@ public class ExecuteCodeResponse {
     /**
      *判题信息
      */
-    private JudgeInfo judgeInfo;
+    private List<JudgeInfo> judgeInfo;
 
 }
