@@ -7,10 +7,11 @@ import com.rabbitmq.client.Channel;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-import space.kuikui.oj.judeg.Judeg;
-import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeResponse;
+import space.kuikui.oj.judge.codesandbox.CodeSandBox;
+import space.kuikui.oj.judge.codesandbox.CodeSandBoxFactory;
+import space.kuikui.oj.judge.codesandbox.model.ExecuteCodeRequest;
+import space.kuikui.oj.judge.codesandbox.model.ExecuteCodeResponse;
 import space.kuikui.oj.mapper.QuestionMapper;
 import space.kuikui.oj.mapper.QuestionSubmitMapper;
 import space.kuikui.oj.mapper.UserRankMapper;
@@ -23,7 +24,6 @@ import space.kuikui.oj.model.entity.UserRank;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * 队列的消费者
@@ -34,14 +34,13 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class RabbitMQConsumer {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    @Resource
-    private Judeg judeg;
-    @Resource
-    private QuestionMapper questionMapper;
+
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
     @Resource
     private UserRankMapper userRankMapper;
+    @Resource
+    private QuestionMapper questionMapper;
 
     /**
      * 监听队列消息
@@ -51,40 +50,42 @@ public class RabbitMQConsumer {
     public void consume(Message  message, Channel channel) {
         String msg = new String(message.getBody());
         try {
-            SubmitRequest submitRequest = objectMapper.readValue(msg, SubmitRequest.class);
-            updateQuestionSubmitStatus(submitRequest.getId(),1);
-            Long questionId = submitRequest.getQuestionId();
-            // 从数据库中查询出 对应的 题目信息
-            Question question = questionMapper.selectById(questionId);
-
-            ExecuteCodeResponse response = judeg.judgeAllTestCases(submitRequest.getCode(), question);
+            ExecuteCodeRequest executeCodeRequest = objectMapper.readValue(msg, ExecuteCodeRequest.class);
+            // 使用远程代码沙箱
+            CodeSandBox remoteSandBox = CodeSandBoxFactory.newInstance("remote");
+            ExecuteCodeResponse response = remoteSandBox.executeCode( executeCodeRequest);
 
             List<JudgeInfo> judgeInfoList = response.getJudgeInfo();
 
-
             judgeInfoList.forEach(System.out::println);
             // 查询用户是否是首次通过
+
+            Long questionId =  executeCodeRequest.getQuestion().getId();
+            Long userId = executeCodeRequest.getUserId();
+            Long submitId = executeCodeRequest.getQuestionSubmitId();
             QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("questionId", questionId)
-                    .eq("userId", submitRequest.getUserId())
+            queryWrapper.eq("questionId",questionId)
+                    .eq("userId",userId)
                                 .eq("status", 2);
             boolean isFirst = questionSubmitMapper.selectCount(queryWrapper) == 0;
-            if (response.getStatus() == 1) {
+            System.out.println(response.getStatus()+"sdsd");
+            if (response.getStatus() == 2) {
                 // 更新执行的代码的状态
                 if(isFirst){
                     // 更新执行的代码的通过数量
                     updateAcceptedCount(questionId);
                     UpdateWrapper<UserRank> updateWrapper2 = new UpdateWrapper<>();
-                    updateWrapper2.eq("userId", submitRequest.getUserId());
+                    updateWrapper2.eq("userId", userId);
                     updateWrapper2.setSql("acceptCount = acceptCount + 1");
                     userRankMapper.update(UserRank.builder().build(), updateWrapper2);
                 }
-                updateQuestionSubmitStatus(submitRequest.getId(),2);
+                updateQuestionSubmitStatus(submitId,2);
 
             }else{
-                updateQuestionSubmitStatus(submitRequest.getId(),3);
+                System.out.println(submitId+"sdsd");
+                updateQuestionSubmitStatus(submitId,3);
             }
-            updateJudgeInfo(submitRequest.getId(),judgeInfoList);
+            updateJudgeInfo(submitId,judgeInfoList);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (IOException e) {
             log.error("解析消息时出现异常", e);

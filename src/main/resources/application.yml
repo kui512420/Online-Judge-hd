@@ -53,7 +53,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 # 代码沙箱设置
 code:
-  default: example
+  default: remote
 # jwt设置
 jwt:
   sign: 512420

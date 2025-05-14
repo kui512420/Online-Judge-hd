@@ -15,6 +15,7 @@ import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.mapper.UserMapper;
 import space.kuikui.oj.model.dto.*;
 import space.kuikui.oj.model.entity.User;
+import space.kuikui.oj.model.entity.UserRank;
 import space.kuikui.oj.service.QuestionSubmitService;
 import space.kuikui.oj.service.RedisSetTokenExample;
 import space.kuikui.oj.service.UserRankService;
@@ -51,43 +52,58 @@ public class UserController {
     private RedisSetTokenExample redisSetTokenExample;
     @Autowired
     private UserMapper userMapper;
+    @Resource
+    private UserRankService userRankService;
 
     /**
-     * 导出文件
-     * @param response
-     * @throws IOException
+     * 获取通过题目数量排行榜
+     * @param limit 返回记录数量
+     * @return 排行榜列表
      */
-    @PostMapping("/export")
-    public void export(HttpServletResponse response) throws IOException {
-        try{
-            List<User> users1 = userService.queryUsers();
-            exportUtil.export(response,"xxx.xls",users1,User.class);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+    @GetMapping("/rank/accept-count")
+    public BaseResponse<Page<UserRank>> getTopUsersByAcceptCount(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        Page<UserRank> rankPage = userRankService.getTopUsersByAcceptCount(current, pageSize);
+        return ResultUtils.success("获取通过题目数量排行榜成功", rankPage);
     }
-
 
     /**
-     * @todo 用户提交数据
-     * @param accessToken
-     *
-     * @return
+     * 获取提交数量排行榜
+     * @param limit 返回记录数量
+     * @return 排行榜列表
      */
-    @PostMapping("/questionCommitInfo")
-    public BaseResponse<UserCommitRequest> questionCommitInfo(@RequestHeader(value = "Accesstoken",required = false) String accessToken) {
-        Map<Object, Object> map = new HashMap<>();
-        try{
-            map = jwtLoginUtils.jwtPeAccess(accessToken);
-        }catch (Exception e){
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR,"未登录") ;
-        }
-        Long userId =Long.valueOf((String) map.get("id")) ;
-
-        return ResultUtils.success("查询用户提交记录成功",questionSubmitService.userCommitInfo(userId));
+    @GetMapping("/rank/submit-count")
+    public BaseResponse<Page<UserRank>> getTopUsersBySubmitCount(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        Page<UserRank> rankPage = userRankService.getTopUsersBySubmitCount(current, pageSize);
+        return ResultUtils.success("获取提交数量排行榜成功", rankPage);
     }
 
+    /**
+     * 获取通过率排行榜
+     * @param limit 返回记录数量
+     * @return 排行榜列表
+     */
+    @GetMapping("/rank/accept-rate")
+    public BaseResponse<Page<UserRank>> getTopUsersByAcceptRate(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        Page<UserRank> rankPage = userRankService.getTopUsersByAcceptRate(current, pageSize);
+        return ResultUtils.success("获取通过率排行榜成功", rankPage);
+    }
 
+    /**
+     * 获取指定用户的排名信息
+     * @param userId 用户ID
+     * @return 用户排名信息
+     */
+    @GetMapping("/rank/user/{userId}")
+    public BaseResponse<UserRank> getUserRankByUserId(@PathVariable Long userId) {
+        UserRank userRank = userRankService.getUserRankByUserId(userId);
+        return ResultUtils.success("获取用户排名信息成功", userRank);
+    }
     /**
      * @todo 用户注册
      * @param userRegisterRequest
@@ -259,13 +275,25 @@ public class UserController {
     }
     /**
      * 更改用户信息
-     * @param id
+     * @param userInfoRequest
      * @return
      */
     @PutMapping("/userInfo")
     public BaseResponse<Integer> putUserRole(@RequestBody UserInfoRequest userInfoRequest) {
         Integer result = userService.updateInfo(userInfoRequest);
         return ResultUtils.success("更改成功",result);
+    }
+
+    /**
+     * 管理员修改用户信息（密码，名称，邮箱，角色）
+     * @param userInfoRequest 用户信息请求对象
+     * @return 修改结果
+     */
+    @PutMapping("/admin/user/info")
+    public BaseResponse<Integer> updateUserInfo(@RequestBody UserInfoRequest userInfoRequest) {
+        // 验证权限可以在拦截器中进行
+        Integer result = userService.updateInfo(userInfoRequest);
+        return ResultUtils.success("用户信息修改成功", result);
     }
 
     /**
@@ -279,13 +307,14 @@ public class UserController {
         try{
 
             Long id = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+            System.out.println(id+"---");
             Long RemainingTime = redisSetTokenExample.getTokenRemainingTime(String.valueOf(id),TimeUnit.MILLISECONDS);
             boolean isDel = redisSetTokenExample.deleteTokenFromSet(String.valueOf(id),accessToken);
-            System.out.println(isDel);
+
             User user = userMapper.findUserById(id);
             token = jwtLoginUtils.jwtBdAccess(user);
 
-            // 延续剩余的时间
+            // 设置 延续剩余的时间
             redisSetTokenExample.saveTokenToSet(String.valueOf(id),token,RemainingTime, TimeUnit.MILLISECONDS);
         }catch (Exception e){
             return ResultUtils.error(50000,"刷新token失败",null);

@@ -18,11 +18,9 @@ public class QuestionViewVo implements Serializable {
         this.title = question.getTitle();
         this.content = question.getContent();
         this.judgeConfig = question.getJudgeConfig();
-        this.judgeCase = question.getJudgeCase();
     }
     private Long id;
     private String title;
     private String content;
     private String judgeConfig;
-    private String judgeCase;
 }

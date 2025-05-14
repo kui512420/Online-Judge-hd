@@ -1,6 +1,4 @@
-package space.kuikui.oj.judeg.codesandbox.model.enums;
-
-import lombok.Data;
+package space.kuikui.oj.judge.codesandbox.model.enums;
 
 /**
  * @author kuikui

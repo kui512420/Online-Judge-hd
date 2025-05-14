@@ -1,4 +1,4 @@
-package space.kuikui.oj.judeg.codesandbox.model;
+package space.kuikui.oj.judge.codesandbox.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

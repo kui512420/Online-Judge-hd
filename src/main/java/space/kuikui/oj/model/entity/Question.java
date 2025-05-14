@@ -15,7 +15,10 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @Builder
+@NoArgsConstructor // 添加无参构造函数
+@AllArgsConstructor // 如果需要全参数构造函数
 public class Question{
+
     /**
      * id
      */

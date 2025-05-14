@@ -1,9 +1,10 @@
-package space.kuikui.oj.judeg.codesandbox.model;
+package space.kuikui.oj.judge.codesandbox.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import space.kuikui.oj.model.entity.Question;
 
 import java.util.List;
 
@@ -26,7 +27,19 @@ public class ExecuteCodeRequest {
      */
     private String code;
     /**
+     * 题目的信息
+     */
+    private Question question;
+    /**
      * 用户编写代码的编程语言
      */
     private String language;
+    /**
+     * 用户ID
+     */
+    private Long userId;
+    /**
+     * 提交记录ID
+     */
+    private Long questionSubmitId;
 }

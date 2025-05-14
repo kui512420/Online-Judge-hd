@@ -40,7 +40,7 @@ public interface UserMapper extends BaseMapper<User> {
     int updateUserRole(@Param("id") Long id,@Param("userRole") String userRole);
     @Update("UPDATE user " +
             "SET userName = #{userName}, " +
-            "password = #{password}, " +
+            "userPassword = #{password}, " +
             "email = #{email}, " +
             "userRole = #{userRole} " +
             "WHERE id = #{id}")

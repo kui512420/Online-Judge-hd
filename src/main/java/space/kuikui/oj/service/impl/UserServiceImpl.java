@@ -146,6 +146,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
             loginLogService.addLoginLog(loginLog);
             throw new BusinessException(ErrorCode.PARMS_ERROR, "账号或密码错误");
         }else{
+            // 检查用户是否被禁用
+            User currentUser = user1 != null ? user1 : user2;
+            if ("ban".equals(currentUser.getUserRole())) {
+                loginLog = LoginLog.builder().user(user).loginTime(new Date()).device(device).ip(ip).errorMsg("账号已被禁用").status(0).build();
+                loginLogService.addLoginLog(loginLog);
+                throw new BusinessException(ErrorCode.FORBINDDEN_ERROR, "账号已被禁用，请联系管理员");
+            }
+            
             if(user1!=null){
                 redisSetTokenExample.deleteAllTokensByUserId(user1.getId().toString());
                 String accessToken = jwtLoginUtils.jwtBdAccess(user1);
@@ -213,7 +221,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"注册失败，数据库错误");
             }else{
                 // 把用户加入排行榜
-                userRankService.addUserRank(UserRank.builder().userId(user.getId()).build());
+                UserRank userRank = UserRank.builder()
+                    .userId(user.getId())
+                    .userName("用户" + user.getId()) // 设置默认用户名
+                    .userAvatar("/default.png") // 设置默认头像
+                    .acceptCount(0)
+                    .submitCount(0)
+                    .build();
+                userRankService.addUserRank(userRank);
+                
                 QueryWrapper<User> queryWrapper = new QueryWrapper<>();
                 queryWrapper.eq("userAccount", userAccount);
                 User user1 = userMapper.selectOne(queryWrapper);
@@ -258,6 +274,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
         int count = 0;
         try{
             count = userMapper.updateUserName(id,userName);
+            // 同时更新排行榜中的用户名
+            if (count > 0) {
+                UserRank userRank = userRankService.getUserRankByUserId(id);
+                if (userRank != null) {
+                    userRank.setUserName(userName);
+                    userRankService.updateUserRank(userRank);
+                    // 更新Redis中的用户信息
+                    redisSetTokenExample.deleteAllTokensByUserId(String.valueOf(id));
+                }
+            }
         }catch (Exception e){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"修改昵称失败");
         }
@@ -301,7 +327,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
 
     @Override
     public int updateUserAvatar(long id, String userAvatar) {
-        return userMapper.updateUserAvatar(id,userAvatar);
+        int count = userMapper.updateUserAvatar(id, userAvatar);
+        if (count > 0) {
+            // 同时更新排行榜中的用户头像
+            UserRank userRank = userRankService.getUserRankByUserId(id);
+            if (userRank != null) {
+                userRank.setUserAvatar(userAvatar);
+                userRankService.updateUserRank(userRank);
+            }
+        }
+        return count;
     }
 
     @Override
@@ -311,7 +346,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
 
     @Override
     public Integer putUserRole(Long id, String userRole) {
-        return userMapper.updateUserRole(id,userRole);
+        Integer result = userMapper.updateUserRole(id,userRole);
+        // 如果用户被禁用，清除其所有token
+        if (result > 0 && "ban".equals(userRole)) {
+            redisSetTokenExample.deleteAllTokensByUserId(String.valueOf(id));
+        }
+        return result;
     }
 
     @Override
@@ -321,7 +361,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>implements Use
 
     @Override
     public Integer updateInfo(UserInfoRequest userInfoRequest) {
-        return userMapper.updateInfo(userInfoRequest);
+        // 验证参数
+        if (userInfoRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "用户ID不能为空");
+        }
+        
+        // 检查用户是否存在
+        User user = userMapper.findUserById(userInfoRequest.getId());
+        if (user == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户不存在");
+        }
+        
+        // 如果请求中包含密码，则需要加密
+        if (userInfoRequest.getPassword() != null && !userInfoRequest.getPassword().isEmpty()) {
+            String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userInfoRequest.getPassword()).getBytes());
+            userInfoRequest.setPassword(encryptPassword);
+        }
+        
+        // 执行更新
+        Integer result = userMapper.updateInfo(userInfoRequest);
+        
+        // 如果更新成功且包含用户名，同时更新排行榜中的用户名
+        if (result > 0 && userInfoRequest.getUserName() != null && !userInfoRequest.getUserName().isEmpty()) {
+            UserRank userRank = userRankService.getUserRankByUserId(userInfoRequest.getId());
+            if (userRank != null) {
+                userRank.setUserName(userInfoRequest.getUserName());
+                userRankService.updateUserRank(userRank);
+            }
+        }
+        
+        // 如果用户被禁用，清除其所有token
+        if (result > 0 && "ban".equals(userInfoRequest.getUserRole())) {
+            redisSetTokenExample.deleteAllTokensByUserId(String.valueOf(userInfoRequest.getId()));
+        }
+        
+        return result;
     }
 
 }

@@ -1,9 +1,8 @@
-package space.kuikui.oj.judeg.codesandbox.impl;
+package space.kuikui.oj.judge.codesandbox.impl;
 
-import space.kuikui.oj.judeg.codesandbox.CodeSandBox;
-import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeRequest;
-import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeResponse;
-import space.kuikui.oj.judeg.codesandbox.model.enums.JudgeInfoMessageEnum;
+import space.kuikui.oj.judge.codesandbox.CodeSandBox;
+import space.kuikui.oj.judge.codesandbox.model.ExecuteCodeRequest;
+import space.kuikui.oj.judge.codesandbox.model.ExecuteCodeResponse;
 import space.kuikui.oj.model.entity.JudgeInfo;
 
 import java.util.List;

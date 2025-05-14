@@ -17,4 +17,6 @@ public class SubmitRequest {
     private String language;
     private String code;
     private long questionId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long competitionId;
 }

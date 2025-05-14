@@ -21,4 +21,13 @@ public interface QuestionSubmitService {
     UserCommitRequest userCommitInfo(Long userId);
 
     Page<QuestionSubmit> rank(SubmitRankRequest submitRankRequest);
+    
+    /**
+     * 获取用户的所有提交记录（分页）
+     * @param userId 用户ID
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页后的用户提交记录列表
+     */
+    Page<QuestionSubmit> getAllUserSubmissions(Long userId, int pageNum, int pageSize);
 }

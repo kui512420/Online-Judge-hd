@@ -17,6 +17,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @Todo 修改用户的名称和简介，登录会失效
+ */
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
 
@@ -33,7 +36,8 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     // 定义不需要拦截的路径
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/api/user/login", "/api/user/register", "/api/user/captcha", "/api/user/email","/api/file/userheader"
+            "/api/user/login", "/api/user/register", "/api/user/captcha", "/api/user/email","/api/file"
+            ,"/api/user/rank/accept-count"
     );
 
     @Override
@@ -61,9 +65,11 @@ public class LoginInterceptor implements HandlerInterceptor {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "Token 无效");
         }
         String userId = jwtResult.get("id").toString();
-
         // 从 Redis 中获取保存的 Token
         boolean isExist = redisSetTokenExample.isTokenExistsInSet(userId, token);
+
+        System.out.println(isExist);
+
         if (!isExist) {
             logger.error("请求路径 {}，Token 在 Redis 中不存在，抛出异常：账号已过期，请重新登录", requestURI);
             throw new BusinessException(ErrorCode.FORBINDDEN_ERROR, "账号已过期，请重新登录");

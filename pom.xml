@@ -11,7 +11,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>3.4.4</spring-boot.version>
+        <spring-boot.version>3.4.5</spring-boot.version>
         <spring-ai.version>1.0.0-M6</spring-ai.version>
     </properties>
     <dependencies>
@@ -71,7 +71,6 @@
             <artifactId>docker-java</artifactId>
             <version>3.3.0</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.baomidou</groupId>

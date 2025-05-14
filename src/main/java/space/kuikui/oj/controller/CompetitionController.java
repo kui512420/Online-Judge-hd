@@ -12,9 +12,12 @@ import space.kuikui.oj.common.ResultUtils;
 import space.kuikui.oj.exception.BusinessException;
 import space.kuikui.oj.model.dto.CompetitionAddRequest;
 import space.kuikui.oj.model.dto.CompetitionRequest;
+import space.kuikui.oj.model.dto.CompetitionSubmitRequest;
 import space.kuikui.oj.model.entity.CompetitionQuestion;
+import space.kuikui.oj.model.entity.CompetitionParticipant;
 import space.kuikui.oj.model.vo.CompetitionVO;
 import space.kuikui.oj.model.vo.QuestionListVo;
+import space.kuikui.oj.model.vo.CompetitionLeaderboardVO;
 import space.kuikui.oj.service.CompetitionQuestionService;
 import space.kuikui.oj.service.CompetitionService;
 
@@ -187,6 +190,148 @@ public class CompetitionController {
     }
     
     /**
+     * 参与竞赛
+     * @param accessToken 访问令牌
+     * @param competitionId 竞赛ID
+     * @return 操作结果
+     */
+    @PostMapping("/join/{competitionId}")
+    public BaseResponse<Boolean> joinCompetition(@RequestHeader(value = "Accesstoken", required = false) String accessToken,
+                                                @PathVariable Long competitionId) {
+        if (competitionId == null) {
+            return ResultUtils.error(ErrorCode.PARMS_ERROR.getCode(),ErrorCode.PARMS_ERROR.getMessage(),false);
+        }
+        
+        try {
+            // 从令牌中获取用户ID
+            Long userId = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+
+            // 获取竞赛信息
+            CompetitionVO competition = competitionService.getCompetitionDetail(competitionId);
+            if (competition == null) {
+                return ResultUtils.error(50000,"竞赛不存在",false);
+            }
+            // 判断竞赛状态是否为进行中
+            if (competition.getStatus() != 1) {
+                return ResultUtils.error(50000,"竞赛未开始或已结束，无法参与",false);
+            }
+            
+            // 调用Service方法处理参与逻辑
+            boolean result = competitionService.joinCompetition(competitionId, userId);
+            return ResultUtils.success("参与竞赛成功", result);
+        } catch (BusinessException e) {
+            return ResultUtils.error(50000,"错误",false);
+        }
+    }
+    
+    /**
+     * 提交竞赛答案
+     * @param accessToken 访问令牌
+     * @param submitRequest 提交请求
+     * @return 操作结果
+     */
+    @PostMapping("/submit")
+    public BaseResponse<Boolean> submitCompetitionAnswers(
+            @RequestHeader(value = "Accesstoken", required = false) String accessToken,
+            @RequestBody CompetitionSubmitRequest submitRequest) {
+        
+        // 参数校验
+        if (submitRequest == null || submitRequest.getCompetitionId() == null 
+                || submitRequest.getQuestionSubmissions() == null || submitRequest.getQuestionSubmissions().isEmpty()) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
+        }
+        
+        try {
+            // 从令牌中获取用户ID
+            if (accessToken == null || accessToken.isEmpty()) {
+                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录，请先登录");
+            }
+            
+            Long userId = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+            if (userId == null) {
+                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "登录信息获取失败");
+            }
+            
+            // 获取竞赛信息
+            Long competitionId = Long.valueOf(submitRequest.getCompetitionId());
+            CompetitionVO competition = competitionService.getCompetitionDetail(competitionId);
+            if (competition == null) {
+                throw new BusinessException(ErrorCode.PARMS_ERROR, "竞赛不存在");
+            }
+            
+            // 判断竞赛状态是否为进行中
+            if (competition.getStatus() != 1) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "竞赛未开始或已结束，无法提交");
+            }
+            
+            // 调用Service方法处理提交逻辑
+            boolean result = competitionService.submitCompetitionAnswers(submitRequest, userId);
+            
+            if (result) {
+                return ResultUtils.success("提交竞赛答案成功", true);
+            } else {
+                return ResultUtils.error(ErrorCode.OPERATION_ERROR.getCode(), "提交竞赛答案失败", false);
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("提交竞赛答案失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "提交竞赛答案失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 编辑竞赛
+     * @param accessToken 访问令牌
+     * @param updateRequest 更新请求
+     * @return 操作结果
+     */
+    @PostMapping("/edit")
+    public BaseResponse<Boolean> editCompetition(
+            @RequestHeader(value = "Accesstoken", required = false) String accessToken,
+            @RequestBody CompetitionAddRequest updateRequest) {
+        
+        if (updateRequest == null || updateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
+        }
+        
+        try {
+            // 从令牌中获取用户角色，验证权限
+            if (accessToken == null || accessToken.isEmpty()) {
+                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录，请先登录");
+            }
+            
+            String userRole = (String) jwtLoginUtils.jwtPeAccess(accessToken).get("userRole");
+            
+            // 仅管理员可编辑
+            if (!"admin".equals(userRole)) {
+                throw new BusinessException(ErrorCode.NOT_AUTH_ERROR, "无权限操作");
+            }
+            
+            // 获取竞赛信息，确认存在
+            CompetitionVO competition = competitionService.getCompetitionDetail(updateRequest.getId());
+            if (competition == null) {
+                throw new BusinessException(ErrorCode.PARMS_ERROR, "竞赛不存在");
+            }
+            
+            // 更新竞赛信息
+            Long userId = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+            boolean success = competitionService.updateCompetition(updateRequest, userId);
+            
+            if (success) {
+                return ResultUtils.success("编辑竞赛成功", true);
+            } else {
+                return ResultUtils.error(ErrorCode.OPERATION_ERROR.getCode(), "编辑竞赛失败", false);
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("编辑竞赛失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "编辑竞赛失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 定时任务：每分钟更新竞赛状态
      * 根据当前时间自动更新竞赛状态（未开始->进行中->已结束）
      */
@@ -196,6 +341,90 @@ public class CompetitionController {
             competitionService.updateCompetitionStatus();
         } catch (Exception e) {
             log.error("定时更新竞赛状态失败", e);
+        }
+    }
+
+    /**
+     * 获取竞赛排行榜
+     * @param competitionId 竞赛ID
+     * @return 竞赛排行榜
+     */
+    @GetMapping("/leaderboard/{competitionId}")
+    public BaseResponse<List<CompetitionLeaderboardVO>> getCompetitionLeaderboard(@PathVariable Long competitionId) {
+        if (competitionId == null) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
+        }
+        try {
+            // 获取竞赛信息
+            CompetitionVO competition = competitionService.getCompetitionDetail(competitionId);
+            if (competition == null) {
+                throw new BusinessException(ErrorCode.PARMS_ERROR, "竞赛不存在");
+            }
+            
+            // 获取竞赛排行榜
+            List<CompetitionLeaderboardVO> leaderboard = competitionService.getCompetitionLeaderboard(competitionId);
+            return ResultUtils.success("获取竞赛排行榜成功", leaderboard);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取竞赛排行榜失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取竞赛排行榜失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 交卷
+     * @param accessToken 访问令牌
+     * @param competitionId 竞赛ID
+     * @param submitRequest 提交请求，包含用户代码
+     * @return 操作结果
+     */
+    @PostMapping("/submit-paper/{competitionId}")
+    public BaseResponse<Boolean> submitPaper(
+            @RequestHeader(value = "Accesstoken", required = false) String accessToken,
+            @PathVariable Long competitionId,
+            @RequestBody(required = false) CompetitionSubmitRequest submitRequest) {
+        if (competitionId == null) {
+            throw new BusinessException(ErrorCode.PARMS_ERROR, "参数错误");
+        }
+        
+        try {
+            // 从令牌中获取用户ID
+            Long userId = Long.valueOf((String) jwtLoginUtils.jwtPeAccess(accessToken).get("id"));
+            if (userId == null) {
+                throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "登录信息获取失败");
+            }
+            
+            // 获取竞赛信息
+            CompetitionVO competition = competitionService.getCompetitionDetail(competitionId);
+            if (competition == null) {
+                throw new BusinessException(ErrorCode.PARMS_ERROR, "竞赛不存在");
+            }
+            
+            // 判断竞赛状态是否为进行中
+            if (competition.getStatus() != 1) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "竞赛未开始或已结束，无法交卷");
+            }
+            
+            // 调用Service方法处理交卷逻辑
+            boolean result;
+            if (submitRequest != null && submitRequest.getQuestionSubmissions() != null 
+                    && !submitRequest.getQuestionSubmissions().isEmpty()) {
+                // 有提交代码数据，先提交代码再交卷
+                submitRequest.setCompetitionId(competitionId.toString());
+                competitionService.submitCompetitionAnswers(submitRequest, userId);
+                result = competitionService.submitPaper(competitionId, userId);
+            } else {
+                // 无提交代码数据，直接交卷
+                result = competitionService.submitPaper(competitionId, userId);
+            }
+            
+            return ResultUtils.success("交卷成功", result);
+        } catch (BusinessException e) {
+            return ResultUtils.error(e.getCode(), e.getMessage(), false);
+        } catch (Exception e) {
+            log.error("交卷失败", e);
+            return ResultUtils.error(ErrorCode.SYSTEM_ERROR.getCode(), "交卷失败: " + e.getMessage(), false);
         }
     }
 } 

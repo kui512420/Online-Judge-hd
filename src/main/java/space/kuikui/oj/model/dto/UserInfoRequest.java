@@ -8,6 +8,7 @@ import lombok.Data;
  */
 @Data
 public class UserInfoRequest {
+    private Long id;
     private String userName;
     private String password;
     private String email;

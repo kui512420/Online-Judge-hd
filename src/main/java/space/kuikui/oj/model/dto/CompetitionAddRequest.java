@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -14,6 +15,12 @@ import java.util.List;
 @Data
 public class CompetitionAddRequest {
     /**
+     * 竞赛ID（编辑时使用）
+     */
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long id;
+    
+    /**
      * 竞赛名称
      */
     private String name;
@@ -21,13 +28,11 @@ public class CompetitionAddRequest {
     /**
      * 开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "GMT+8")
     private LocalDateTime startTime;
 
     /**
      * 结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "GMT+8")
     private LocalDateTime endTime;
 
     /**

@@ -1,0 +1,27 @@
+// 默认拒绝所有权限
+grant {
+    // 允许基本的标准输入输出操作
+    permission java.lang.RuntimePermission "readFileDescriptor";
+    permission java.lang.RuntimePermission "writeFileDescriptor";
+    
+    // 允许基本的反射操作（用于某些标准库功能）
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    
+    // 允许创建类加载器（某些Java基础库需要）
+    permission java.lang.RuntimePermission "createClassLoader";
+    
+    // 允许获取当前类加载器（某些Java基础库需要）
+    permission java.lang.RuntimePermission "getClassLoader";
+    
+    // 允许基本线程操作（注：不允许修改系统线程组）
+    permission java.lang.RuntimePermission "modifyThread";
+    
+    // 允许读取系统属性，但不允许修改
+    permission java.util.PropertyPermission "*", "read";
+    
+    // 禁止所有网络操作
+    // 禁止所有文件操作（除了临时目录）
+    // 禁止所有系统操作
+    // 禁止修改安全管理器
+    // 禁止退出虚拟机
+}; 

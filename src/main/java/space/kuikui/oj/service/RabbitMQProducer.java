@@ -19,6 +19,7 @@ public class RabbitMQProducer {
     @Resource
     private RabbitTemplate rabbitTemplate;
     public void sendMessage(String exchange,String routingKey,Object message) throws JsonProcessingException {
+
         String objString = objectMapper.writeValueAsString(message);
         rabbitTemplate.convertAndSend(exchange,routingKey,objString);
         log.info("Sent message: " + message);

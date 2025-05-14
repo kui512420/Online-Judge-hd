@@ -1,28 +1,20 @@
 package space.kuikui.oj;
 
-import cn.hutool.core.io.file.FileReader;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import space.kuikui.oj.common.JwtLoginUtils;
-import space.kuikui.oj.judeg.codesandbox.CodeSandBox;
-import space.kuikui.oj.judeg.codesandbox.CodeSandBoxFactory;
-import space.kuikui.oj.judeg.codesandbox.CodeSandBoxProxy;
-import space.kuikui.oj.judeg.codesandbox.impl.ExampleCodeSandBox;
-import space.kuikui.oj.judeg.codesandbox.model.ExecuteCodeRequest;
-import space.kuikui.oj.model.entity.Question;
+import space.kuikui.oj.judge.codesandbox.CodeSandBox;
+import space.kuikui.oj.judge.codesandbox.CodeSandBoxFactory;
+import space.kuikui.oj.judge.codesandbox.CodeSandBoxProxy;
+import space.kuikui.oj.judge.codesandbox.model.ExecuteCodeRequest;
 import space.kuikui.oj.model.entity.User;
 import space.kuikui.oj.service.RabbitMQProducer;
 
-import java.util.Collections;import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static space.kuikui.oj.config.RabbitMqConfig.initRabbitMqConfig;
 
 @SpringBootTest
 class OjApplicationTests {

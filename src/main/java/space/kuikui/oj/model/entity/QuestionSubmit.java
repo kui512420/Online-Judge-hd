@@ -21,6 +21,8 @@ public class QuestionSubmit {
     private Long questionId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long userId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long competitionId;
     private Date createTime;
     private Date updateTime;
     private Integer isDelete;
